@@ -7,6 +7,7 @@
   body { font-family: system-ui, sans-serif; display: flex; gap: 2rem; padding: 1rem; margin: 0; }
   .panel { width: 380px; }
   h1 { font-size: 1.3rem; margin: 0 0 0.5rem 0; }
+  h2 { margin: 0 0 0.5rem 0; }
   label { display: block; margin-top: 0.5rem; font-size: 0.9rem; }
   input, select { width: 100%; padding: 0.3rem; font-size: 0.9rem; }
   button { margin-top: 0.7rem; padding: 0.4rem 0.6rem; font-size: 0.9rem; }
@@ -58,6 +59,17 @@
     </select>
   </label>
 
+  <label>Lower boundary style
+    <select id="boundaryLower">
+      <option value="rapid">Rapid (solid)</option>
+      <option value="diffuse">Diffuse (dashed)</option>
+    </select>
+  </label>
+
+  <label>
+    <input type="checkbox" id="noFill"> No background fill (symbols only)
+  </label>
+
   <label>Label
     <input type="text" id="label" value="Clayey gyttja">
   </label>
@@ -80,12 +92,19 @@
 <div class="panel" style="max-width: 360px;">
   <h2>About this tool</h2>
   <p style="font-size:0.9rem;">
-    This application generates stratigraphic column diagrams using 
+This application generates stratigraphic column diagrams using 
     Troels–Smith lithological symbols and Munsell colours. 
     It is designed to display a column of soft sediment core data
 	used in palaeoclimatic, palaeoenvironmental, and sedimentological, invesitigations.
-	
+	</p>
+	<p style="font-size:0.9rem;">
 	The figure may be downloaded in .svg format and edited using any suitable vector graphics tool.
+	<p style="font-size:0.9rem;">
+	To specify diffuse changes between units the upper and lower boundaries must be complementary 
+	i.e. a diffuse lower boundary in unit 1 must be matched by a diffuse upper boundary in unit 2.
+	<p style="font-size:0.9rem;">
+	If no single lithostratigraphy dominates the unit, symbols can be overlain, 
+	to ensure these do not obscure lower layers you must check the 'No background Fill' option.
   </p>
 
   <h3>Author</h3>
@@ -101,9 +120,6 @@
 </div>
 
 <script>
-/* ------------------------------
-   Expanded MUNSELL → RGB table
-   ------------------------------ */
 const munsellTable = {
   "10YR 2/1": "#3b3229","10YR 3/1": "#4a3f35","10YR 3/2": "#5b4734",
   "10YR 4/1": "#5c4f42","10YR 4/2": "#6d5a3f","10YR 4/3": "#c2a878",
@@ -111,407 +127,360 @@ const munsellTable = {
   "10YR 5/3": "#a4865b","10YR 5/4": "#d2b48c","10YR 6/2": "#a58c6a",
   "10YR 6/3": "#ddc49a","10YR 6/4": "#e0c08a","10YR 7/2": "#bca582",
   "10YR 7/3": "#e3cf9f","10YR 7/4": "#e8d6a8",
-
   "7.5YR 3/2": "#5b3f33","7.5YR 3/4": "#6b3f2f","7.5YR 4/2": "#7a5743",
   "7.5YR 4/4": "#b07b52","7.5YR 4/6": "#b56f3b","7.5YR 5/2": "#8f6a4e",
   "7.5YR 5/4": "#c18455","7.5YR 5/6": "#d19a5e","7.5YR 6/2": "#a47f5c",
   "7.5YR 6/4": "#d39b63","7.5YR 6/6": "#e0aa6a",
-
   "5YR 3/2": "#5a3a33","5YR 3/4": "#8a5a4a","5YR 3/6": "#9a4b34",
   "5YR 4/2": "#7a5243","5YR 4/4": "#a35f45","5YR 4/6": "#b45a3a",
   "5YR 5/2": "#8f6a57","5YR 5/4": "#b7775a","5YR 5/6": "#c66b4a",
   "5YR 6/2": "#a47f6a","5YR 6/4": "#c58b6a",
-
   "2.5Y 4/2": "#7a745c","2.5Y 4/3": "#8a7a5a","2.5Y 5/2": "#b7b7a8",
   "2.5Y 5/3": "#b0a57a","2.5Y 6/2": "#c2c0a0","2.5Y 6/3": "#c8b88a",
   "2.5Y 7/2": "#d3cfaa",
-
   "5Y 4/2": "#747a5c","5Y 4/3": "#7f845c","5Y 5/2": "#b6bba8",
   "5Y 5/3": "#a5b07a","5Y 6/2": "#c3c8a8","5Y 6/3": "#c0c47f",
   "5Y 7/2": "#d0d4aa",
-
   "2.5YR 3/2": "#5a3533","2.5YR 3/4": "#7a3a33","2.5YR 4/2": "#7a4a43",
   "2.5YR 4/4": "#9a4f43","2.5YR 5/2": "#8f5f57","2.5YR 5/4": "#b06a5a",
-
   "N 2": "#3a3a3a","N 3": "#4f4f4f","N 4": "#888888",
   "N 5": "#a0a0a0","N 6": "#b8b8b8","N 7": "#d0d0d0"
 };
+function munsellToRGB(m){return munsellTable[m]||"#cccccc";}
 
-function munsellToRGB(m) { return munsellTable[m] || "#cccccc"; }
-
-/* ------------------------------
-   Populate Munsell dropdown
-   ------------------------------ */
-function populateMunsellDropdown() {
-  const sel = document.getElementById("munsell");
-  sel.innerHTML = "";
-
-  const groups = {
-    "10YR": Object.keys(munsellTable).filter(k => k.startsWith("10YR")),
-    "7.5YR": Object.keys(munsellTable).filter(k => k.startsWith("7.5YR")),
-    "5YR": Object.keys(munsellTable).filter(k => k.startsWith("5YR")),
-    "2.5YR": Object.keys(munsellTable).filter(k => k.startsWith("2.5YR")),
-    "5Y": Object.keys(munsellTable).filter(k => k.startsWith("5Y ")),
-    "2.5Y": Object.keys(munsellTable).filter(k => k.startsWith("2.5Y")),
-    "Neutral (N)": Object.keys(munsellTable).filter(k => k.startsWith("N "))
+function populateMunsellDropdown(){
+  const sel=document.getElementById("munsell");
+  sel.innerHTML="";
+  const groups={
+    "10YR":Object.keys(munsellTable).filter(k=>k.startsWith("10YR")),
+    "7.5YR":Object.keys(munsellTable).filter(k=>k.startsWith("7.5YR")),
+    "5YR":Object.keys(munsellTable).filter(k=>k.startsWith("5YR")),
+    "2.5YR":Object.keys(munsellTable).filter(k=>k.startsWith("2.5YR")),
+    "5Y":Object.keys(munsellTable).filter(k=>k.startsWith("5Y ")),
+    "2.5Y":Object.keys(munsellTable).filter(k=>k.startsWith("2.5Y")),
+    "Neutral (N)":Object.keys(munsellTable).filter(k=>k.startsWith("N "))
   };
-
-  for (const group in groups) {
-    const og = document.createElement("optgroup");
-    og.label = group;
-    groups[group].sort().forEach(key => {
-      const opt = document.createElement("option");
-      opt.value = key;
-      opt.textContent = key;
+  for(const group in groups){
+    const og=document.createElement("optgroup");
+    og.label=group;
+    groups[group].sort().forEach(key=>{
+      const opt=document.createElement("option");
+      opt.value=key; opt.textContent=key;
       og.appendChild(opt);
     });
     sel.appendChild(og);
   }
-
-  sel.value = "10YR 4/3";
+  sel.value="10YR 4/3";
 }
 
-/* ------------------------------
-   App state
-   ------------------------------ */
-const units = [];
-const svgPreview = document.getElementById("svgPreview");
+const units=[];
+const svgPreview=document.getElementById("svgPreview");
 
-/* ------------------------------
-   Add / clear units
-   ------------------------------ */
-document.getElementById("addUnit").onclick = () => {
-  const top = parseFloat(topDepth.value);
-  const bottom = parseFloat(bottomDepth.value);
-  if (isNaN(top) || isNaN(bottom) || bottom <= top) {
-    alert("Bottom depth must be greater than top depth.");
-    return;
+document.getElementById("addUnit").onclick=()=>{
+  const top=parseFloat(topDepth.value);
+  const bottom=parseFloat(bottomDepth.value);
+  if(isNaN(top)||isNaN(bottom)||bottom<=top){
+    alert("Bottom depth must be greater than top depth."); return;
   }
-
   units.push({
     top,
     bottom,
-    munsell: munsell.value,
-    pattern: pattern.value,
-    boundary_upper: boundaryUpper.value,
-    label: label.value.trim()
+    munsell:munsell.value,
+    pattern:pattern.value,
+    boundary_upper:boundaryUpper.value,
+    boundary_lower:boundaryLower.value,
+    noFill:noFill.checked,
+    label:label.value.trim()
   });
-
-  units.sort((a, b) => a.top - b.top);
+  units.sort((a,b)=>a.top-b.top);
   renderUnitsList();
   renderSvg();
 };
 
-document.getElementById("clearUnits").onclick = () => {
-  units.length = 0;
+document.getElementById("clearUnits").onclick=()=>{
+  units.length=0;
   renderUnitsList();
   renderSvg();
 };
 
-/* ------------------------------
-   Download SVG
-   ------------------------------ */
-document.getElementById("downloadSvg").onclick = () => {
-  const serializer = new XMLSerializer();
-  const svgString = serializer.serializeToString(svgPreview);
-  const blob = new Blob([svgString], { type: "image/svg+xml" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "lake_core_stratigraphy.svg";
-  a.click();
+document.getElementById("downloadSvg").onclick=()=>{
+  const serializer=new XMLSerializer();
+  const svgString=serializer.serializeToString(svgPreview);
+  const blob=new Blob([svgString],{type:"image/svg+xml"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download="lake_core_stratigraphy.svg"; a.click();
   URL.revokeObjectURL(url);
 };
 
-/* ------------------------------
-   Units list
-   ------------------------------ */
-function renderUnitsList() {
-  unitsList.innerHTML = "";
-  if (!units.length) {
-    unitsList.textContent = "No units yet.";
-    return;
-  }
-  units.forEach((u, i) => {
-    const row = document.createElement("div");
-    row.className = "unit-item";
-    row.textContent =
-      `${u.top}–${u.bottom} cm | ${u.label || "(no label)"} | ${u.munsell} | upper: ${u.boundary_upper}`;
-    const del = document.createElement("button");
-    del.textContent = "×";
-    del.onclick = () => { units.splice(i, 1); renderUnitsList(); renderSvg(); };
+function renderUnitsList(){
+  unitsList.innerHTML="";
+  if(!units.length){unitsList.textContent="No units yet.";return;}
+  units.forEach((u,i)=>{
+    const row=document.createElement("div");
+    row.className="unit-item";
+    row.textContent=`${u.top}–${u.bottom} cm | ${u.label||"(no label)"} | ${u.munsell} | upper: ${u.boundary_upper}, lower: ${u.boundary_lower}, noFill: ${u.noFill}`;
+    const del=document.createElement("button");
+    del.textContent="×";
+    del.onclick=()=>{units.splice(i,1);renderUnitsList();renderSvg();};
     row.appendChild(del);
     unitsList.appendChild(row);
   });
 }
 
-/* ------------------------------
-   Troels–Smith patterns (Illustrator‑safe)
-   ------------------------------ */
-function addPatterns(defs) {
-  const svgNS = "http://www.w3.org/2000/svg";
+function addPatterns(defs){
+  const svgNS="http://www.w3.org/2000/svg";
 
-  /* Sphagnum peat (~) */
-  let p = document.createElementNS(svgNS, "pattern");
-  p.id = "sphagnum"; p.setAttribute("patternUnits","userSpaceOnUse");
+  let p=document.createElementNS(svgNS,"pattern");
+  p.id="sphagnum"; p.setAttribute("patternUnits","userSpaceOnUse");
   p.setAttribute("width",14); p.setAttribute("height",10);
-  let sp = document.createElementNS(svgNS,"path");
+  let sp=document.createElementNS(svgNS,"path");
   sp.setAttribute("d","M0 6 Q4 2 8 6 T16 6");
   sp.setAttribute("stroke","black"); sp.setAttribute("fill","none");
   p.appendChild(sp); defs.appendChild(p);
 
-  /* Herbaceous peat (vertical lines) */
-  p = document.createElementNS(svgNS,"pattern");
+  p=document.createElementNS(svgNS,"pattern");
   p.id="herbaceous"; p.setAttribute("patternUnits","userSpaceOnUse");
   p.setAttribute("width",8); p.setAttribute("height",8);
-  let v = document.createElementNS(svgNS,"line");
+  let v=document.createElementNS(svgNS,"line");
   v.setAttribute("x1",4); v.setAttribute("y1",0);
   v.setAttribute("x2",4); v.setAttribute("y2",8);
-  v.setAttribute("stroke","black"); v.setAttribute("stroke-width",1);
+  v.setAttribute("stroke","black");
   p.appendChild(v); defs.appendChild(p);
 
-  /* Woody peat (vvv) */
-  p = document.createElementNS(svgNS,"pattern");
+  p=document.createElementNS(svgNS,"pattern");
   p.id="woody"; p.setAttribute("patternUnits","userSpaceOnUse");
   p.setAttribute("width",12); p.setAttribute("height",10);
-  let w = document.createElementNS(svgNS,"polyline");
+  let w=document.createElementNS(svgNS,"polyline");
   w.setAttribute("points","0,2 3,8 6,2");
   w.setAttribute("stroke","black"); w.setAttribute("fill","none");
   p.appendChild(w); defs.appendChild(p);
 
-  /* Detritus – alternating shallow angled dashes (non-overlapping) */
-  p = document.createElementNS(svgNS,"pattern");
+  p=document.createElementNS(svgNS,"pattern");
   p.id="detritus"; p.setAttribute("patternUnits","userSpaceOnUse");
   p.setAttribute("width",20); p.setAttribute("height",12);
-
-  let d1 = document.createElementNS(svgNS,"line");
+  let d1=document.createElementNS(svgNS,"line");
   d1.setAttribute("x1",0); d1.setAttribute("y1",3);
   d1.setAttribute("x2",20); d1.setAttribute("y2",1);
-  d1.setAttribute("stroke","black"); d1.setAttribute("stroke-width",1);
-
-  let d2 = document.createElementNS(svgNS,"line");
+  d1.setAttribute("stroke","black");
+  let d2=document.createElementNS(svgNS,"line");
   d2.setAttribute("x1",0); d2.setAttribute("y1",9);
   d2.setAttribute("x2",20); d2.setAttribute("y2",7);
-  d2.setAttribute("stroke","black"); d2.setAttribute("stroke-width",1);
-
-  let d3 = document.createElementNS(svgNS,"line");
+  d2.setAttribute("stroke","black");
+  let d3=document.createElementNS(svgNS,"line");
   d3.setAttribute("x1",0); d3.setAttribute("y1",5);
   d3.setAttribute("x2",20); d3.setAttribute("y2",7);
-  d3.setAttribute("stroke","black"); d3.setAttribute("stroke-width",1);
-
-  let d4 = document.createElementNS(svgNS,"line");
+  d3.setAttribute("stroke","black");
+  let d4=document.createElementNS(svgNS,"line");
   d4.setAttribute("x1",0); d4.setAttribute("y1",11);
   d4.setAttribute("x2",20); d4.setAttribute("y2",9);
-  d4.setAttribute("stroke","black"); d4.setAttribute("stroke-width",1);
-
-  p.appendChild(d1); p.appendChild(d2); p.appendChild(d3); p.appendChild(d4);
+  d4.setAttribute("stroke","black");
+  p.appendChild(d1);p.appendChild(d2);p.appendChild(d3);p.appendChild(d4);
   defs.appendChild(p);
 
-  /* Laminated mud – horizontal bars */
-  p = document.createElementNS(svgNS,"pattern");
+  p=document.createElementNS(svgNS,"pattern");
   p.id="laminated"; p.setAttribute("patternUnits","userSpaceOnUse");
   p.setAttribute("width",8); p.setAttribute("height",8);
-  let bar = document.createElementNS(svgNS,"rect");
+  let bar=document.createElementNS(svgNS,"rect");
   bar.setAttribute("x",0); bar.setAttribute("y",0);
   bar.setAttribute("width",8); bar.setAttribute("height",2);
   bar.setAttribute("fill","black");
   p.appendChild(bar); defs.appendChild(p);
 
-  /* Clay – L‑shaped polyline */
-  p = document.createElementNS(svgNS,"pattern");
+  p=document.createElementNS(svgNS,"pattern");
   p.id="clay"; p.setAttribute("patternUnits","userSpaceOnUse");
   p.setAttribute("width",10); p.setAttribute("height",10);
-  let cL = document.createElementNS(svgNS,"polyline");
+  let cL=document.createElementNS(svgNS,"polyline");
   cL.setAttribute("points","0,2 0,8 4,8");
   cL.setAttribute("stroke","black"); cL.setAttribute("fill","none");
   p.appendChild(cL); defs.appendChild(p);
 
-  /* Silt – bold L‑shaped polyline */
-  p = document.createElementNS(svgNS,"pattern");
+  p=document.createElementNS(svgNS,"pattern");
   p.id="silt"; p.setAttribute("patternUnits","userSpaceOnUse");
   p.setAttribute("width",10); p.setAttribute("height",10);
-  let sL = document.createElementNS(svgNS,"polyline");
+  let sL=document.createElementNS(svgNS,"polyline");
   sL.setAttribute("points","0,2 0,8 4,8");
   sL.setAttribute("stroke","black"); sL.setAttribute("stroke-width",2);
   sL.setAttribute("fill","none");
   p.appendChild(sL); defs.appendChild(p);
 
-  /* Fine sand – small dots */
-  p = document.createElementNS(svgNS,"pattern");
+  p=document.createElementNS(svgNS,"pattern");
   p.id="fine_sand"; p.setAttribute("patternUnits","userSpaceOnUse");
   p.setAttribute("width",4); p.setAttribute("height",4);
-  let fs = document.createElementNS(svgNS,"circle");
+  let fs=document.createElementNS(svgNS,"circle");
   fs.setAttribute("cx",2); fs.setAttribute("cy",2); fs.setAttribute("r",0.8);
   fs.setAttribute("fill","black");
   p.appendChild(fs); defs.appendChild(p);
 
-  /* Medium sand – medium dots */
-  p = document.createElementNS(svgNS,"pattern");
+  p=document.createElementNS(svgNS,"pattern");
   p.id="medium_sand"; p.setAttribute("patternUnits","userSpaceOnUse");
   p.setAttribute("width",6); p.setAttribute("height",6);
-  let ms = document.createElementNS(svgNS,"circle");
+  let ms=document.createElementNS(svgNS,"circle");
   ms.setAttribute("cx",3); ms.setAttribute("cy",3); ms.setAttribute("r",1.4);
   ms.setAttribute("fill","black");
   p.appendChild(ms); defs.appendChild(p);
 
-  /* Coarse sand – open circles */
-  p = document.createElementNS(svgNS,"pattern");
+  p=document.createElementNS(svgNS,"pattern");
   p.id="coarse_sand"; p.setAttribute("patternUnits","userSpaceOnUse");
   p.setAttribute("width",8); p.setAttribute("height",8);
-  let cs = document.createElementNS(svgNS,"circle");
+  let cs=document.createElementNS(svgNS,"circle");
   cs.setAttribute("cx",4); cs.setAttribute("cy",4); cs.setAttribute("r",2);
   cs.setAttribute("fill","none"); cs.setAttribute("stroke","black");
   cs.setAttribute("stroke-width",1);
   p.appendChild(cs); defs.appendChild(p);
 
-  /* Gyttja – cross‑hatch */
-  p = document.createElementNS(svgNS,"pattern");
+  p=document.createElementNS(svgNS,"pattern");
   p.id="gyttja"; p.setAttribute("patternUnits","userSpaceOnUse");
   p.setAttribute("width",6); p.setAttribute("height",6);
-  let g1 = document.createElementNS(svgNS,"line");
+  let g1=document.createElementNS(svgNS,"line");
   g1.setAttribute("x1",0); g1.setAttribute("y1",0);
   g1.setAttribute("x2",6); g1.setAttribute("y2",6);
-  g1.setAttribute("stroke","black"); g1.setAttribute("stroke-width",1);
-  let g2 = document.createElementNS(svgNS,"line");
+  g1.setAttribute("stroke","black");
+  let g2=document.createElementNS(svgNS,"line");
   g2.setAttribute("x1",6); g2.setAttribute("y1",0);
   g2.setAttribute("x2",0); g2.setAttribute("y2",6);
-  g2.setAttribute("stroke","black"); g2.setAttribute("stroke-width",1);
+  g2.setAttribute("stroke","black");
   p.appendChild(g1); p.appendChild(g2); defs.appendChild(p);
 
-  /* Marl – curved U‑shaped path (medium depth) */
-  p = document.createElementNS(svgNS,"pattern");
+  p=document.createElementNS(svgNS,"pattern");
   p.id="marl"; p.setAttribute("patternUnits","userSpaceOnUse");
   p.setAttribute("width",14); p.setAttribute("height",10);
-  let mU = document.createElementNS(svgNS,"path");
+  let mU=document.createElementNS(svgNS,"path");
   mU.setAttribute("d","M0 2 Q2 8 4 2");
   mU.setAttribute("stroke","black"); mU.setAttribute("fill","none");
   mU.setAttribute("stroke-width",1);
   p.appendChild(mU); defs.appendChild(p);
 }
 
-/* ------------------------------
-   Boundary line
-   ------------------------------ */
-function drawBoundary(svg, y, x1, x2, type) {
-  const svgNS = "http://www.w3.org/2000/svg";
-  const line = document.createElementNS(svgNS, "line");
-  line.setAttribute("x1", x1);
-  line.setAttribute("x2", x2);
-  line.setAttribute("y1", y);
-  line.setAttribute("y2", y);
-  line.setAttribute("stroke", "black");
-  line.setAttribute("stroke-width", 1);
-  if (type === "diffuse") line.setAttribute("stroke-dasharray", "4 2");
+function drawBoundary(svg,y,x1,x2,type){
+  const svgNS="http://www.w3.org/2000/svg";
+  const line=document.createElementNS(svgNS,"line");
+  line.setAttribute("x1",x1); line.setAttribute("x2",x2);
+  line.setAttribute("y1",y); line.setAttribute("y2",y);
+  line.setAttribute("stroke","black"); line.setAttribute("stroke-width",1);
+  if(type==="diffuse") line.setAttribute("stroke-dasharray","4 2");
   svg.appendChild(line);
 }
 
-/* ------------------------------
-   SVG rendering
-   ------------------------------ */
-function renderSvg() {
-  svgPreview.innerHTML = "";
-  const svgNS = "http://www.w3.org/2000/svg";
+function renderSvg(){
+  svgPreview.innerHTML="";
+  const svgNS="http://www.w3.org/2000/svg";
+  const pxPerCm=5;
+  const width=120;
+  const maxDepth=units.length?Math.max(...units.map(u=>u.bottom)):0;
+  const colX=40, colY=10;
 
-  const pxPerCm = 5;
-  const width = 120;
-  const maxDepth = units.length ? Math.max(...units.map(u => u.bottom)) : 0;
-  const colX = 40;
-  const colY = 10;
+  svgPreview.setAttribute("xmlns","http://www.w3.org/2000/svg");
+  svgPreview.setAttribute("width",width+80);
+  svgPreview.setAttribute("height",maxDepth*pxPerCm+40);
+  svgPreview.setAttribute("viewBox",`0 0 ${width+80} ${maxDepth*pxPerCm+40}`);
 
-  svgPreview.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  svgPreview.setAttribute("width", width + 80);
-  svgPreview.setAttribute("height", maxDepth * pxPerCm + 40);
-  svgPreview.setAttribute("viewBox", `0 0 ${width + 80} ${maxDepth * pxPerCm + 40}`);
-
-  const defs = document.createElementNS(svgNS, "defs");
+  const defs=document.createElementNS(svgNS,"defs");
   addPatterns(defs);
   svgPreview.appendChild(defs);
 
-  const bg = document.createElementNS(svgNS, "rect");
-  bg.setAttribute("x", 0);
-  bg.setAttribute("y", 0);
-  bg.setAttribute("width", width + 80);
-  bg.setAttribute("height", maxDepth * pxPerCm + 40);
-  bg.setAttribute("fill", "white");
+  const bg=document.createElementNS(svgNS,"rect");
+  bg.setAttribute("x",0); bg.setAttribute("y",0);
+  bg.setAttribute("width",width+80);
+  bg.setAttribute("height",maxDepth*pxPerCm+40);
+  bg.setAttribute("fill","white");
   svgPreview.appendChild(bg);
 
-  const col = document.createElementNS(svgNS, "rect");
-  col.setAttribute("x", colX);
-  col.setAttribute("y", colY);
-  col.setAttribute("width", width);
-  col.setAttribute("height", maxDepth * pxPerCm);
-  col.setAttribute("fill", "none");
-  col.setAttribute("stroke", "black");
+  const col=document.createElementNS(svgNS,"rect");
+  col.setAttribute("x",colX); col.setAttribute("y",colY);
+  col.setAttribute("width",width);
+  col.setAttribute("height",maxDepth*pxPerCm);
+  col.setAttribute("fill","none");
+  col.setAttribute("stroke","black");
   svgPreview.appendChild(col);
 
-  units.forEach(u => {
-    const yTop = colY + u.top * pxPerCm;
-    const h = (u.bottom - u.top) * pxPerCm;
+  // PASS 1: units (fills + patterns)
+  units.forEach(u=>{
+    const yTop=colY+u.top*pxPerCm;
+    const h=(u.bottom-u.top)*pxPerCm;
 
-    const base = document.createElementNS(svgNS, "rect");
-    base.setAttribute("x", colX);
-    base.setAttribute("y", yTop);
-    base.setAttribute("width", width);
-    base.setAttribute("height", h);
-    base.setAttribute("fill", munsellToRGB(u.munsell));
-    base.setAttribute("stroke", "black");
+    const base=document.createElementNS(svgNS,"rect");
+    base.setAttribute("x",colX);
+    base.setAttribute("y",yTop);
+    base.setAttribute("width",width);
+    base.setAttribute("height",h);
+    if(u.noFill){
+      base.setAttribute("fill","none");
+      base.setAttribute("fill-opacity","0");
+    }else{
+      base.setAttribute("fill",munsellToRGB(u.munsell));
+      base.setAttribute("fill-opacity","1");
+    }
+    base.setAttribute("stroke","none");
     svgPreview.appendChild(base);
 
-    if (u.pattern !== "none") {
-      const pat = document.createElementNS(svgNS, "rect");
-      pat.setAttribute("x", colX);
-      pat.setAttribute("y", yTop);
-      pat.setAttribute("width", width);
-      pat.setAttribute("height", h);
-      pat.setAttribute("fill", `url(#${u.pattern})`);
+    if(u.pattern!=="none"){
+      const pat=document.createElementNS(svgNS,"rect");
+      pat.setAttribute("x",colX);
+      pat.setAttribute("y",yTop);
+      pat.setAttribute("width",width);
+      pat.setAttribute("height",h);
+      pat.setAttribute("fill",`url(#${u.pattern})`);
       svgPreview.appendChild(pat);
     }
 
-    drawBoundary(svgPreview, yTop, colX, colX + width, u.boundary_upper);
-
-    if (u.label) {
-      const t = document.createElementNS(svgNS, "text");
-      t.setAttribute("x", colX + width + 5);
-      t.setAttribute("y", yTop + h / 2);
-      t.setAttribute("dominant-baseline", "middle");
-      t.setAttribute("font-size", "10");
-      t.textContent = u.label;
+    if(u.label){
+      const t=document.createElementNS(svgNS,"text");
+      t.setAttribute("x",colX+width+5);
+      t.setAttribute("y",yTop+h/2);
+      t.setAttribute("dominant-baseline","middle");
+      t.setAttribute("font-size","10");
+      t.textContent=u.label;
       svgPreview.appendChild(t);
     }
   });
 
-  const tickInterval = 10;
-  for (let d = 0; d <= maxDepth; d += tickInterval) {
-    const y = colY + d * pxPerCm;
-    const line = document.createElementNS(svgNS, "line");
-    line.setAttribute("x1", colX - 5);
-    line.setAttribute("x2", colX);
-    line.setAttribute("y1", y);
-    line.setAttribute("y2", y);
-    line.setAttribute("stroke", "black");
+  // PASS 2: boundaries on top
+  units.forEach(u=>{
+    const yTop=colY+u.top*pxPerCm;
+    const h=(u.bottom-u.top)*pxPerCm;
+    drawBoundary(svgPreview,yTop,colX,colX+width,u.boundary_upper);
+    drawBoundary(svgPreview,yTop+h,colX,colX+width,u.boundary_lower);
+  });
+
+  const tickInterval=10;
+  for(let d=0; d<=maxDepth; d+=tickInterval){
+    const y=colY+d*pxPerCm;
+    const line=document.createElementNS(svgNS,"line");
+    line.setAttribute("x1",colX-5); line.setAttribute("x2",colX);
+    line.setAttribute("y1",y); line.setAttribute("y2",y);
+    line.setAttribute("stroke","black");
     svgPreview.appendChild(line);
 
-    const t = document.createElementNS(svgNS, "text");
-    t.setAttribute("x", colX - 8);
-    t.setAttribute("y", y + 3);
-    t.setAttribute("text-anchor", "end");
-    t.setAttribute("font-size", "8");
-    t.textContent = d;
+    const t=document.createElementNS(svgNS,"text");
+    t.setAttribute("x",colX-8);
+    t.setAttribute("y",y+3);
+    t.setAttribute("text-anchor","end");
+    t.setAttribute("font-size","8");
+    t.textContent=d;
     svgPreview.appendChild(t);
   }
 
-  const axisLabel = document.createElementNS(svgNS, "text");
-  axisLabel.setAttribute("x", colX - 25);
-  axisLabel.setAttribute("y", colY - 2);
-  axisLabel.setAttribute("text-anchor", "middle");
-  axisLabel.setAttribute("font-size", "9");
-  axisLabel.textContent = "Depth (cm)";
-  svgPreview.appendChild(axisLabel);
+const axisLabel = document.createElementNS(svgNS, "text");
+
+// Position at vertical midpoint of the column
+const midY = colY + (maxDepth * pxPerCm) / 2;
+
+// Place slightly left of the tick marks
+axisLabel.setAttribute("x", colX - 30);
+axisLabel.setAttribute("y", midY);
+
+// Rotate 90° counter‑clockwise around that point
+axisLabel.setAttribute("transform", `rotate(-90 ${colX - 30} ${midY})`);
+
+axisLabel.setAttribute("text-anchor", "middle");
+axisLabel.setAttribute("font-size", "10");
+axisLabel.textContent = "Depth (cm)";
+
+svgPreview.appendChild(axisLabel);
+
 }
 
-/* ------------------------------
-   Init
-   ------------------------------ */
 populateMunsellDropdown();
 renderUnitsList();
 renderSvg();
