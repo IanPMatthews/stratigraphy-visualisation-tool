@@ -233,7 +233,7 @@ function addPatterns(defs){
 
   let p=document.createElementNS(svgNS,"pattern");
   p.id="sphagnum"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",14); p.setAttribute("height",10);
+  p.setAttribute("width",20); p.setAttribute("height",14);
   let sp=document.createElementNS(svgNS,"path");
   sp.setAttribute("d","M0 6 Q4 2 8 6 T16 6");
   sp.setAttribute("stroke","black"); sp.setAttribute("fill","none");
@@ -256,48 +256,57 @@ function addPatterns(defs){
   w.setAttribute("stroke","black"); w.setAttribute("fill","none");
   p.appendChild(w); defs.appendChild(p);
 
-  p=document.createElementNS(svgNS,"pattern");
-  p.id="detritus"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",20); p.setAttribute("height",12);
-  let d1=document.createElementNS(svgNS,"line");
-  d1.setAttribute("x1",0); d1.setAttribute("y1",3);
-  d1.setAttribute("x2",20); d1.setAttribute("y2",1);
-  d1.setAttribute("stroke","black");
-  let d2=document.createElementNS(svgNS,"line");
-  d2.setAttribute("x1",0); d2.setAttribute("y1",9);
-  d2.setAttribute("x2",20); d2.setAttribute("y2",7);
-  d2.setAttribute("stroke","black");
-  let d3=document.createElementNS(svgNS,"line");
-  d3.setAttribute("x1",0); d3.setAttribute("y1",5);
-  d3.setAttribute("x2",20); d3.setAttribute("y2",7);
-  d3.setAttribute("stroke","black");
-  let d4=document.createElementNS(svgNS,"line");
-  d4.setAttribute("x1",0); d4.setAttribute("y1",11);
-  d4.setAttribute("x2",20); d4.setAttribute("y2",9);
-  d4.setAttribute("stroke","black");
-  p.appendChild(d1);p.appendChild(d2);p.appendChild(d3);p.appendChild(d4);
-  defs.appendChild(p);
+p = document.createElementNS(svgNS,"pattern");
+p.id = "detritus";
+p.setAttribute("patternUnits","userSpaceOnUse");
+p.setAttribute("width",20);
+p.setAttribute("height",20);
+
+// Line 1: /
+let d1 = document.createElementNS(svgNS,"line");
+d1.setAttribute("x1",0);  d1.setAttribute("y1",4);
+d1.setAttribute("x2",8); d1.setAttribute("y2",0);
+d1.setAttribute("stroke","black");
+
+// Line 2: / (offset)
+let d2 = document.createElementNS(svgNS,"line");
+d2.setAttribute("x1",-8); d2.setAttribute("y1",4);
+d2.setAttribute("x2",0);  d2.setAttribute("y2",0);
+d2.setAttribute("stroke","black");
+
+// Line 3: \ 
+let d3 = document.createElementNS(svgNS,"line");
+d3.setAttribute("x1",12);  d3.setAttribute("y1",12);
+d3.setAttribute("x2",20); d3.setAttribute("y2",16);
+d3.setAttribute("stroke","black");
+
+
+p.appendChild(d1);
+p.appendChild(d2);
+p.appendChild(d3);
+defs.appendChild(p);
 
   p=document.createElementNS(svgNS,"pattern");
   p.id="laminated"; p.setAttribute("patternUnits","userSpaceOnUse");
   p.setAttribute("width",8); p.setAttribute("height",8);
   let bar=document.createElementNS(svgNS,"rect");
   bar.setAttribute("x",0); bar.setAttribute("y",0);
-  bar.setAttribute("width",8); bar.setAttribute("height",2);
+  bar.setAttribute("width",8); bar.setAttribute("height",1.5);
   bar.setAttribute("fill","black");
   p.appendChild(bar); defs.appendChild(p);
 
   p=document.createElementNS(svgNS,"pattern");
   p.id="clay"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",10); p.setAttribute("height",10);
+  p.setAttribute("width",14); p.setAttribute("height",14);
   let cL=document.createElementNS(svgNS,"polyline");
   cL.setAttribute("points","0,2 0,8 4,8");
-  cL.setAttribute("stroke","black"); cL.setAttribute("fill","none");
+  cL.setAttribute("stroke","black"); cL.setAttribute("stroke-width",1);
+  cL.setAttribute("fill","none");
   p.appendChild(cL); defs.appendChild(p);
 
   p=document.createElementNS(svgNS,"pattern");
   p.id="silt"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",10); p.setAttribute("height",10);
+  p.setAttribute("width",14); p.setAttribute("height",14);
   let sL=document.createElementNS(svgNS,"polyline");
   sL.setAttribute("points","0,2 0,8 4,8");
   sL.setAttribute("stroke","black"); sL.setAttribute("stroke-width",2);
@@ -306,7 +315,7 @@ function addPatterns(defs){
 
   p=document.createElementNS(svgNS,"pattern");
   p.id="fine_sand"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",4); p.setAttribute("height",4);
+  p.setAttribute("width",6); p.setAttribute("height",6);
   let fs=document.createElementNS(svgNS,"circle");
   fs.setAttribute("cx",2); fs.setAttribute("cy",2); fs.setAttribute("r",0.8);
   fs.setAttribute("fill","black");
@@ -314,7 +323,7 @@ function addPatterns(defs){
 
   p=document.createElementNS(svgNS,"pattern");
   p.id="medium_sand"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",6); p.setAttribute("height",6);
+  p.setAttribute("width",8); p.setAttribute("height",8);
   let ms=document.createElementNS(svgNS,"circle");
   ms.setAttribute("cx",3); ms.setAttribute("cy",3); ms.setAttribute("r",1.4);
   ms.setAttribute("fill","black");
@@ -322,7 +331,7 @@ function addPatterns(defs){
 
   p=document.createElementNS(svgNS,"pattern");
   p.id="coarse_sand"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",8); p.setAttribute("height",8);
+  p.setAttribute("width",10); p.setAttribute("height",10);
   let cs=document.createElementNS(svgNS,"circle");
   cs.setAttribute("cx",4); cs.setAttribute("cy",4); cs.setAttribute("r",2);
   cs.setAttribute("fill","none"); cs.setAttribute("stroke","black");
@@ -331,25 +340,31 @@ function addPatterns(defs){
 
   p=document.createElementNS(svgNS,"pattern");
   p.id="gyttja"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",6); p.setAttribute("height",6);
+  p.setAttribute("width",18); p.setAttribute("height",18);
   let g1=document.createElementNS(svgNS,"line");
   g1.setAttribute("x1",0); g1.setAttribute("y1",0);
-  g1.setAttribute("x2",6); g1.setAttribute("y2",6);
+  g1.setAttribute("x2",18); g1.setAttribute("y2",18);
   g1.setAttribute("stroke","black");
   let g2=document.createElementNS(svgNS,"line");
-  g2.setAttribute("x1",6); g2.setAttribute("y1",0);
-  g2.setAttribute("x2",0); g2.setAttribute("y2",6);
+  g2.setAttribute("x1",18); g2.setAttribute("y1",0);
+  g2.setAttribute("x2",0); g2.setAttribute("y2",18);
   g2.setAttribute("stroke","black");
   p.appendChild(g1); p.appendChild(g2); defs.appendChild(p);
 
-  p=document.createElementNS(svgNS,"pattern");
-  p.id="marl"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",14); p.setAttribute("height",10);
-  let mU=document.createElementNS(svgNS,"path");
-  mU.setAttribute("d","M0 2 Q2 8 4 2");
-  mU.setAttribute("stroke","black"); mU.setAttribute("fill","none");
-  mU.setAttribute("stroke-width",1);
-  p.appendChild(mU); defs.appendChild(p);
+  p = document.createElementNS(svgNS, "pattern");
+p.id = "marl";
+p.setAttribute("patternUnits", "userSpaceOnUse");
+p.setAttribute("width", 14);   // wider tile
+p.setAttribute("height", 16);  // deeper tile
+
+let mU = document.createElementNS(svgNS, "path");
+mU.setAttribute("d", "M0 2 Q5 14 10 2");  // bigger + deeper U
+mU.setAttribute("stroke", "black");
+mU.setAttribute("fill", "none");
+mU.setAttribute("stroke-width", 1.5);
+
+p.appendChild(mU);
+defs.appendChild(p);
 }
 
 function drawBoundary(svg,y,x1,x2,type){
