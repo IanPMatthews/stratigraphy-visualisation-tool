@@ -471,7 +471,7 @@ function renderSvg(){
     t.setAttribute("x",colX-8);
     t.setAttribute("y",y+3);
     t.setAttribute("text-anchor","end");
-    t.setAttribute("font-size","8");
+    t.setAttribute("font-size","12");
     t.textContent=d;
     svgPreview.appendChild(t);
   }
@@ -489,7 +489,7 @@ axisLabel.setAttribute("y", midY);
 axisLabel.setAttribute("transform", `rotate(-90 ${colX - 30} ${midY})`);
 
 axisLabel.setAttribute("text-anchor", "middle");
-axisLabel.setAttribute("font-size", "10");
+axisLabel.setAttribute("font-size", "14");
 axisLabel.textContent = "Depth (cm)";
 
 svgPreview.appendChild(axisLabel);
@@ -503,3 +503,4 @@ renderSvg();
 
 </body>
 </html>
+
