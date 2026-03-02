@@ -458,7 +458,7 @@ function renderSvg(){
     drawBoundary(svgPreview,yTop+h,colX,colX+width,u.boundary_lower);
   });
 
-  const tickInterval=10;
+  const tickInterval=20;
   for(let d=0; d<=maxDepth; d+=tickInterval){
     const y=colY+d*pxPerCm;
     const line=document.createElementNS(svgNS,"line");
@@ -503,4 +503,5 @@ renderSvg();
 
 </body>
 </html>
+
 
