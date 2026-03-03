@@ -3,6 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <title>Core Stratigraphy Visualiser (Troels–Smith + Munsell)</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-R8N9RWD5J5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-R8N9RWD5J5');
+</script>
+
 <style>
   body { font-family: system-ui, sans-serif; display: flex; gap: 2rem; padding: 1rem; margin: 0; }
   .panel { width: 380px; }
@@ -15,12 +25,39 @@
   .unit-item { display: flex; justify-content: space-between; align-items: center; padding: 0.2rem 0; border-bottom: 1px solid #eee; }
   .unit-item:last-child { border-bottom: none; }
   .svg-container { border: 1px solid #ccc; padding: 0.5rem; background: #fafafa; max-width: 320px; max-height: 600px; overflow: auto; }
+  .inline-check {
+  display: flex !important;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.inline-check input[type="checkbox"] {
+  width: auto !important;
+  padding: 0;
+  margin: 0;
+}
 </style>
 </head>
 <body>
 
 <div class="panel">
   <h1>Core Stratigraphy</h1>
+  
+  <label>Column title
+  <input type="text" id="columnTitle" placeholder="BH1 or Group 1">
+</label>
+
+<label>Ground surface altitude (m OD)
+  <input type="number" id="groundOD" value="0" step="0.01">
+</label>
+
+<label class="inline-check">
+  <input type="checkbox" id="useOD">
+  <span>Show elevation (m OD) instead of depth (cm)</span>
+</label>
+
 
   <label>Top depth (cm)
     <input type="number" id="topDepth" value="0" step="0.1">
@@ -31,24 +68,26 @@
   </label>
 
   <label>Munsell colour
-    <select id="munsell"></select>
+  <select id="munsellGroup"></select>
+  
+	<select id="munsell"></select>
   </label>
 
   <label>Troels–Smith lithology pattern
     <select id="pattern">
       <option value="none">None</option>
-      <option value="sphagnum">Sphagnum peat (~)</option>
-      <option value="herbaceous">Herbaceous peat (vertical lines)</option>
-      <option value="woody">Woody peat (vvv)</option>
-      <option value="detritus">Detritus (angled dashes)</option>
-      <option value="laminated">Laminated/varved mud (horizontal bars)</option>
-      <option value="clay">Clay (LLLL)</option>
-      <option value="silt">Silt (bold LLL)</option>
-      <option value="fine_sand">Fine sand (small dots)</option>
-      <option value="medium_sand">Medium sand (medium dots)</option>
-      <option value="coarse_sand">Coarse sand (open circles)</option>
-      <option value="gyttja">Gyttja (cross‑hatch)</option>
-      <option value="marl">Marl (UUUU)</option>
+      <option value="sphagnum">Moss peat - Tb (~)</option>
+      <option value="herbaceous">Herbaceous peat - Th (vertical lines)</option>
+      <option value="woody">Woody peat - Tl (vvv)</option>
+      <option value="detritus">Organic detritus - Dg (angled dashes)</option>
+      <option value="laminated">Laminated/varved lake mud (horizontal bars)</option>
+      <option value="clay">Silt - Ag (LLLL)</option>
+      <option value="silt">Clay - As (bold LLL)</option>
+      <option value="fine_sand">Fine sand - Ga (small dots)</option>
+      <option value="medium_sand">Medium sand - Gs (medium dots)</option>
+      <option value="coarse_sand">Coarse sand - Gg (open circles)</option>
+      <option value="gyttja">Gyttja - Ld (cross hatch)</option>
+      <option value="marl">Marl - Lc (UUUU)</option>
     </select>
   </label>
 
@@ -66,9 +105,10 @@
     </select>
   </label>
 
-  <label>
-    <input type="checkbox" id="noFill"> No background fill (symbols only)
-  </label>
+ <label class="inline-check">
+  <input type="checkbox" id="noFill">
+  <span>No background fill (symbols only)</span>
+</label>
 
   <label>Label
     <input type="text" id="label" value="Clayey gyttja">
@@ -80,6 +120,7 @@
   <div class="units-list" id="unitsList"></div>
 
   <button id="downloadSvg" type="button">Download SVG</button>
+  <button id="downloadPdf" type="button">Download PDF</button>
 </div>
 
 <div class="panel">
@@ -120,61 +161,129 @@ This application generates stratigraphic column diagrams using
 </div>
 
 <script>
+document.getElementById("downloadPdf").onclick = () => {
+  const { jsPDF } = window.jspdf;
+
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "pt",
+    format: "a4"
+  });
+
+  const svgElement = document.getElementById("svgPreview");
+
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const margin = 40;
+  const availableWidth = pageWidth - margin * 2;
+
+  const svgWidth =
+    svgElement.viewBox.baseVal.width ||
+    svgElement.clientWidth ||
+    300;
+
+  const scale = availableWidth / svgWidth;
+
+  // IMPORTANT: svg2pdf is now available because you loaded svg2pdf.min.js locally
+  window.svg2pdf(svgElement, pdf, {
+    x: margin,
+    y: margin,
+    scale: scale
+  });
+
+  pdf.save("stratigraphy.pdf");
+};
+</script>
+
+<script>
 const munsellTable = {
-  "10YR 2/1": "#3b3229","10YR 3/1": "#4a3f35","10YR 3/2": "#5b4734",
-  "10YR 4/1": "#5c4f42","10YR 4/2": "#6d5a3f","10YR 4/3": "#c2a878",
-  "10YR 4/4": "#b08b55","10YR 5/1": "#6f6254","10YR 5/2": "#8a7657",
-  "10YR 5/3": "#a4865b","10YR 5/4": "#d2b48c","10YR 6/2": "#a58c6a",
-  "10YR 6/3": "#ddc49a","10YR 6/4": "#e0c08a","10YR 7/2": "#bca582",
-  "10YR 7/3": "#e3cf9f","10YR 7/4": "#e8d6a8",
-  "7.5YR 3/2": "#5b3f33","7.5YR 3/4": "#6b3f2f","7.5YR 4/2": "#7a5743",
-  "7.5YR 4/4": "#b07b52","7.5YR 4/6": "#b56f3b","7.5YR 5/2": "#8f6a4e",
-  "7.5YR 5/4": "#c18455","7.5YR 5/6": "#d19a5e","7.5YR 6/2": "#a47f5c",
-  "7.5YR 6/4": "#d39b63","7.5YR 6/6": "#e0aa6a",
-  "5YR 3/2": "#5a3a33","5YR 3/4": "#8a5a4a","5YR 3/6": "#9a4b34",
-  "5YR 4/2": "#7a5243","5YR 4/4": "#a35f45","5YR 4/6": "#b45a3a",
-  "5YR 5/2": "#8f6a57","5YR 5/4": "#b7775a","5YR 5/6": "#c66b4a",
-  "5YR 6/2": "#a47f6a","5YR 6/4": "#c58b6a",
-  "2.5Y 4/2": "#7a745c","2.5Y 4/3": "#8a7a5a","2.5Y 5/2": "#b7b7a8",
-  "2.5Y 5/3": "#b0a57a","2.5Y 6/2": "#c2c0a0","2.5Y 6/3": "#c8b88a",
-  "2.5Y 7/2": "#d3cfaa",
-  "5Y 4/2": "#747a5c","5Y 4/3": "#7f845c","5Y 5/2": "#b6bba8",
-  "5Y 5/3": "#a5b07a","5Y 6/2": "#c3c8a8","5Y 6/3": "#c0c47f",
-  "5Y 7/2": "#d0d4aa",
-  "2.5YR 3/2": "#5a3533","2.5YR 3/4": "#7a3a33","2.5YR 4/2": "#7a4a43",
-  "2.5YR 4/4": "#9a4f43","2.5YR 5/2": "#8f5f57","2.5YR 5/4": "#b06a5a",
-  "N 2": "#3a3a3a","N 3": "#4f4f4f","N 4": "#888888",
-  "N 5": "#a0a0a0","N 6": "#b8b8b8","N 7": "#d0d0d0"
+  // Reds (10R → 2.5R)
+"5R 2.5/1": "#453838","5R 2.5/2": "#4C3536","5R 2.5/3": "#533233","5R 2.5/4": "#592F31","5R 2.5/6": "#64272D","5R 3/1": "#514444","5R 3/2": "#5A4141","5R 3/3": "#623E3D","5R 3/4": "#683A3A","5R 3/6": "#743335","5R 3/8": "#7F282F","5R 4/1": "#6A5E5D","5R 4/2": "#735B59","5R 4/3": "#7B5756","5R 4/4": "#825453","5R 4/6": "#8F4D4C","5R 4/8": "#9C4546","5R 5/1": "#817878","5R 5/2": "#8B7574","5R 5/3": "#947271","5R 5/4": "#9C6F6D","5R 5/6": "#AB6866","5R 5/8": "#B8615E","5R 6/1": "#9C9392","5R 6/2": "#A5908E","5R 6/3": "#AE8D8B","5R 6/4": "#B68A87","5R 6/6": "#C6837F","5R 6/8": "#D37C78","5R 7/1": "#B6ADAD","5R 7/2": "#C0AAA9","5R 7/3": "#C8A8A5","5R 7/4": "#D1A5A1","5R 7/6": "#E19E99","5R 7/8": "#F19792","5R 8/1": "#CCC9C9","5R 8/2": "#D8C6C4","5R 8/3": "#E3C3C0","5R 8/4": "#EDBFBB","7.5R 2.5/1": "#443837","7.5R 2.5/2": "#4C3534","7.5R 2.5/3": "#533231","7.5R 2.5/4": "#592F2D","7.5R 2.5/6": "#642827","7.5R 3/1": "#524443","7.5R 3/2": "#5A413F","7.5R 3/3": "#623E3A","7.5R 3/4": "#683B36","7.5R 3/6": "#74342F","7.5R 3/8": "#7F2A26","7.5R 4/1": "#6A5E5C","7.5R 4/2": "#735B58","7.5R 4/3": "#7B5853","7.5R 4/4": "#83544F","7.5R 4/6": "#904E46","7.5R 4/8": "#9C463D","7.5R 5/1": "#827877","7.5R 5/2": "#8C7572","7.5R 5/3": "#95726D","7.5R 5/4": "#9D6F69","7.5R 5/6": "#AB695F","7.5R 5/8": "#B96155","7.5R 6/1": "#9D9291","7.5R 6/2": "#A6908C","7.5R 6/3": "#AF8D87","7.5R 6/4": "#B78A82","7.5R 6/6": "#C68479","7.5R 6/8": "#D47D6F","7.5R 7/1": "#B6ADAB","7.5R 7/2": "#C0AAA6","7.5R 7/3": "#CAA7A1","7.5R 7/4": "#D2A59C","7.5R 7/6": "#E29F92","7.5R 7/8": "#F29787","7.5R 8/1": "#CCC9C8","7.5R 8/2": "#D9C6C2","7.5R 8/3": "#E4C3BC","7.5R 8/4": "#EEBFB6","10R 2.5/1": "#443836","10R 2.5/2": "#4C3632","10R 3/1": "#514441","10R 3/2": "#5A413D","10R 3/3": "#613E38","10R 3/4": "#673B33","10R 3/6": "#733529","10R 3/8": "#7D2C1D","10R 4/1": "#6A5E5B","10R 4/2": "#735B55","10R 4/3": "#7B5850","10R 4/4": "#83554A","10R 4/6": "#8F4F3E","10R 4/8": "#9A4832","10R 5/1": "#827876","10R 5/2": "#8C7570","10R 5/3": "#957369","10R 5/4": "#9C7063","10R 5/6": "#AB6A56","10R 5/8": "#B86348","10R 6/1": "#9D9290","10R 6/2": "#A79089","10R 6/3": "#B08D83","10R 6/4": "#B88A7C","10R 6/6": "#C68570","10R 6/8": "#D37F63","10R 7/1": "#B7ADAB","10R 7/2": "#C1AAA4","10R 7/3": "#CAA89D","10R 7/4": "#D2A597","10R 7/6": "#E29F89","10R 7/8": "#F1997B","10R 8/1": "#CDC9C8","10R 8/2": "#D9C6C0","10R 8/3": "#E5C3B8","10R 8/4": "#EFC0B0",
+
+  // Yellow-Reds / YR (10YR → 2.5YR)
+"2.5YR 2.5/1": "#443935","2.5YR 2.5/2": "#4B3630","2.5YR 2.5/3": "#51342A","2.5YR 2.5/4": "#573125","2.5YR 3/1": "#514440","2.5YR 3/2": "#59423A","2.5YR 3/3": "#603F34","2.5YR 3/4": "#663D2E","2.5YR 3/6": "#703720","2.5YR 3/8": "#79310E","2.5YR 4/1": "#6A5E59","2.5YR 4/2": "#735B53","2.5YR 4/3": "#7B594C","2.5YR 4/4": "#815645","2.5YR 4/6": "#8C5137","2.5YR 4/8": "#964C26","2.5YR 5/1": "#837873","2.5YR 5/2": "#8C766D","2.5YR 5/3": "#947366","2.5YR 5/4": "#9B715E","2.5YR 5/6": "#A96B4F","2.5YR 5/8": "#B4663D","2.5YR 6/1": "#9E928D","2.5YR 6/2": "#A79086","2.5YR 6/3": "#AF8E7F","2.5YR 6/4": "#B68B77","2.5YR 6/6": "#C58668","2.5YR 6/8": "#D18158","2.5YR 7/1": "#B8ADA9","2.5YR 7/2": "#C1ABA1","2.5YR 7/3": "#CAA899","2.5YR 7/4": "#D2A691","2.5YR 7/6": "#E1A180","2.5YR 7/8": "#EE9B70","2.5YR 8/1": "#CEC9C6","2.5YR 8/2": "#DAC6BD","2.5YR 8/3": "#E5C3B3","2.5YR 8/4": "#EEC0AA","5YR 2.5/1": "#433934","5YR 2.5/2": "#4A372E","5YR 3/1": "#51453F","5YR 3/2": "#584338","5YR 3/3": "#5E4131","5YR 3/4": "#633F2A","5YR 4/1": "#695E58","5YR 4/2": "#725C50","5YR 4/3": "#795A48","5YR 4/4": "#7F583F","5YR 4/6": "#89542F","5YR 5/1": "#837872","5YR 5/2": "#8B766A","5YR 5/3": "#937462","5YR 5/4": "#997259","5YR 5/6": "#A56E46","5YR 5/8": "#AF6932","5YR 6/1": "#9E938B","5YR 6/2": "#A69083","5YR 6/3": "#AE8F7B","5YR 6/4": "#B48C72","5YR 6/6": "#C1885F","5YR 6/8": "#CC844B","5YR 7/1": "#B8ADA6","5YR 7/2": "#C1AB9D","5YR 7/3": "#C8A995","5YR 7/4": "#D0A78B","5YR 7/6": "#DDA378","5YR 7/8": "#E99F65","5YR 8/1": "#D1C9C2","5YR 8/2": "#DBC6B8","5YR 8/3": "#E4C4AE","5YR 8/4": "#ECC2A4","7.5YR 2.5/1": "#433933","7.5YR 2.5/2": "#48382C","7.5YR 2.5/3": "#4D3625","7.5YR 3/1": "#50453E","7.5YR 3/2": "#564436","7.5YR 3/3": "#5B422E","7.5YR 3/4": "#604026","7.5YR 4/1": "#695F57","7.5YR 4/2": "#715D4E","7.5YR 4/3": "#775B44","7.5YR 4/4": "#7D593A","7.5YR 4/6": "#855628","7.5YR 5/1": "#827971","7.5YR 5/2": "#8A7768","7.5YR 5/3": "#91755E","7.5YR 5/4": "#977354","7.5YR 5/6": "#A2703F","7.5YR 5/8": "#AA6D27","7.5YR 6/1": "#9D938A","7.5YR 6/2": "#A59181","7.5YR 6/3": "#AC8F77","7.5YR 6/4": "#B28E6E","7.5YR 6/6": "#BD8A58","7.5YR 6/8": "#C78742","7.5YR 7/1": "#B8AEA4","7.5YR 7/2": "#C0AC9B","7.5YR 7/3": "#C7AA91","7.5YR 7/4": "#CDA886","7.5YR 7/6": "#D9A571","7.5YR 7/8": "#E3A25B","7.5YR 8/1": "#D2C9BF","7.5YR 8/2": "#DAC7B5","7.5YR 8/3": "#E2C5AA","7.5YR 8/4": "#E8C49F","7.5YR 8/6": "#F5C08A","7.5YR 8.5/1": "#DFD6CD","7.5YR 9/1": "#EDE4DA","7.5YR 9.5/1": "#F9F2E6","7.5YR 8.5/2": "#E8D5C2","7.5YR 9/2": "#F6E2CE","7.5YR 9.5/2": "#FFF0DA","10YR 2/2": "#3A2D20","10YR 3/1": "#4E463D","10YR 3/2": "#544535","10YR 3/3": "#58432C","10YR 3/4": "#5C4222","10YR 3/6": "#634008","10YR 4/1": "#685F55","10YR 4/2": "#6E5E4B","10YR 4/3": "#745C41","10YR 4/4": "#795B36","10YR 4/6": "#805921","10YR 5/1": "#81796F","10YR 5/2": "#887865","10YR 5/3": "#8E775A","10YR 5/4": "#93754F","10YR 5/6": "#9C7337","10YR 5/8": "#A3711C","10YR 6/1": "#9C9388","10YR 6/2": "#A3927E","10YR 6/3": "#A99173","10YR 6/4": "#AE9068","10YR 6/6": "#B88D51","10YR 6/8": "#BF8B37","10YR 7/1": "#B6AEA3","10YR 7/2": "#BDAD97","10YR 7/3": "#C4AC8C","10YR 7/4": "#C9AB81","10YR 7/6": "#D3A869","10YR 7/8": "#DBA651","10YR 8/1": "#D1C9BC","10YR 8/2": "#D8C8B1","10YR 8/3": "#DEC7A6","10YR 8/4": "#E4C69A","10YR 8/6": "#EFC382","10YR 8/8": "#F8C169","10YR 8.5/1": "#DFD7CA","10YR 9/1": "#ECE5D7","10YR 9.5/1": "#F9F2E4","10YR 8.5/2": "#E6D6BE","10YR 9/2": "#F4E3CA","10YR 9.5/2": "#FFF1D6",
+
+// Yellows (10Y → 2.5Y)
+"2.5Y 2.5/1": "#403A33","2.5Y 3/1": "#4C473D","2.5Y 3/2": "#514634","2.5Y 3/3": "#55452A","2.5Y 4/1": "#666054","2.5Y 4/2": "#6C5F4A","2.5Y 4/3": "#705E3E","2.5Y 4/4": "#745D33","2.5Y 5/1": "#807A6E","2.5Y 5/2": "#867963","2.5Y 5/3": "#8A7858","2.5Y 5/4": "#8F774B","2.5Y 5/6": "#967631","2.5Y 6/1": "#9A9487","2.5Y 6/2": "#A0937C","2.5Y 6/3": "#A59370","2.5Y 6/4": "#A99264","2.5Y 6/6": "#B1904A","2.5Y 6/8": "#B78F2D","2.5Y 7/1": "#B4AFA1","2.5Y 7/2": "#BAAE95","2.5Y 7/3": "#C0AD89","2.5Y 7/4": "#C5AD7D","2.5Y 7/6": "#CDAB64","2.5Y 7/8": "#D3AA49","2.5Y 8/1": "#D0CABA","2.5Y 8/2": "#D5C9AE","2.5Y 8/3": "#DAC8A2","2.5Y 8/4": "#DFC896","2.5Y 8/6": "#E8C67C","2.5Y 8/8": "#EFC562","2.5Y 9.5/1": "#F8F2E1","2.5Y 9/1": "#ECE5D5","2.5Y 8.5/1": "#DED7C7","2.5Y 9.5/2": "#FEF2D3","2.5Y 9/2": "#F1E5C7","2.5Y 8.5/2": "#E3D7BB","5Y 2.5/1": "#3E3B33","5Y 2.5/2": "#423B29","5Y 3/1": "#4B473D","5Y 3/2": "#4E4733","5Y 4/1": "#646054","5Y 4/2": "#696049","5Y 4/3": "#6C603D","5Y 4/4": "#6F5F31","5Y 5/1": "#7E7A6E","5Y 5/2": "#827A62","5Y 5/3": "#867A56","5Y 5/4": "#897A49","5Y 5/6": "#8F792C","5Y 6/1": "#999586","5Y 6/2": "#9D957A","5Y 6/3": "#A0946E","5Y 6/4": "#A39461","5Y 6/6": "#AA9345","5Y 6/8": "#AE9324","5Y 7/1": "#B4AFA0","5Y 7/2": "#B8AF94","5Y 7/3": "#BBAF87","5Y 7/4": "#BEAF7A","5Y 7/6": "#C4AE5F","5Y 7/8": "#C9AE42","5Y 8/1": "#CFCAB9","5Y 8/2": "#D2CAAC","5Y 8/3": "#D6CAA0","5Y 8/4": "#D9CA93","5Y 8/6": "#DFCA77","5Y 8/8": "#E4C95A","10Y 3/2": "#494834","10Y 3/4": "#4B491D","10Y 4/2": "#63624A","10Y 4/4": "#656330","10Y 5/2": "#7D7C62","10Y 5/4": "#7F7D48","10Y 6/2": "#98967A","10Y 6/4": "#9A9761","10Y 8/1": "#CCCBB8","10Y 7/1": "#B1B0A1","10Y 6/1": "#969586","10Y 5/1": "#7C7B6F","10Y 4/1": "#616156","10Y 3/1": "#48483E","10Y 2.5/1": "#3C3C34",
+
+// Gleys 5GY → 5PB)
+"5GY 8/1": "#C8CCBA","5GY 7/1": "#AEB1A1","5GY 6/1": "#939688","5GY 5/1": "#797C71","5GY 4/1": "#5F6259","5GY 3/1": "#464841","5GY 2.5/1": "#3A3C36","5GY 3/2": "#434A38","5GY 3/4": "#3F4C24","5GY 4/2": "#5D634E","5GY 4/4": "#586638","5GY 5/2": "#767D66","5GY 5/4": "#738051","5GY 6/2": "#91987D","5GY 6/4": "#8D9B68","10GY 8/1": "#C1CEBF","10GY 7/1": "#A8B2A6","10GY 6/1": "#8D978D","10GY 5/1": "#757D74","10GY 4/1": "#5C625B","10GY 3/1": "#444844","10GY 2.5/1": "#383C38","5G 8/1": "#BDCEC4","5G 7/1": "#A5B3AA","5G 6/1": "#8B9890","5G 5/1": "#727D77","5G 4/1": "#5A635E","5G 3/1": "#424945","5G 2.5/1": "#373C39","5G 8/2": "#B4D1C0","5G 7/2": "#9BB6A7","5G 6/2": "#819B8D","5G 5/2": "#698074","5G 4/2": "#50655A","5G 3/2": "#394B42","5G 2.5/2": "#2F3F37","10G 8/1": "#BDCEC7","10G 7/1": "#A3B3AD","10G 6/1": "#8B9793","10G 5/1": "#717D79","10G 4/1": "#59635F","10G 3/1": "#414946","10G 2.5/1": "#363C3A","5BG 8/1": "#BDCECA","5BG 7/1": "#A3B3AF","5BG 6/1": "#8A9895","5BG 5/1": "#707D7B","5BG 4/1": "#576361","5BG 3/1": "#404948","5BG 2.5/1": "#353D3C","10BG 8/1": "#BFCDCC","10BG 7/1": "#A4B2B2","10BG 6/1": "#8A9797","10BG 5/1": "#6F7D7E","10BG 4/1": "#576363","10BG 3/1": "#3E494A","10BG 2.5/1": "#333D3E","5B 8/1": "#C3CCCD","5B 7/1": "#A7B1B3","5B 6/1": "#8C9799","5B 5/1": "#727C7F","5B 4/1": "#576265","5B 3/1": "#3E494C","5B 2.5/1": "#333D3F","10B 8/1": "#C5CBCD","10B 7/1": "#AAB0B3","10B 6/1": "#8E969A","10B 5/1": "#747C80","10B 4/1": "#5A6266","10B 3/1": "#3F484F","10B 2.5/1": "#343C42","5PB 8/1": "#C8CACD","5PB 7/1": "#ADAFB4","5PB 6/1": "#92959A","5PB 5/1": "#787A81","5PB 4/1": "#5D6068","5PB 3/1": "#434750","5PB 2.5/1": "#383B43",
+
+
+  // Neutrals (N)
+  "N 1":"#0d0d0d","N 2":"#3a3a3a","N 3":"#4f4f4f","N 4":"#888888","N 5":"#a0a0a0","N 6":"#b8b8b8","N 7":"#d0d0d0","N 8":"#e0e0e0","N 9":"#f0f0f0"
 };
 function munsellToRGB(m){return munsellTable[m]||"#cccccc";}
 
-function populateMunsellDropdown(){
-  const sel=document.getElementById("munsell");
-  sel.innerHTML="";
-  const groups={
-    "10YR":Object.keys(munsellTable).filter(k=>k.startsWith("10YR")),
-    "7.5YR":Object.keys(munsellTable).filter(k=>k.startsWith("7.5YR")),
-    "5YR":Object.keys(munsellTable).filter(k=>k.startsWith("5YR")),
-    "2.5YR":Object.keys(munsellTable).filter(k=>k.startsWith("2.5YR")),
-    "5Y":Object.keys(munsellTable).filter(k=>k.startsWith("5Y ")),
-    "2.5Y":Object.keys(munsellTable).filter(k=>k.startsWith("2.5Y")),
-    "Neutral (N)":Object.keys(munsellTable).filter(k=>k.startsWith("N "))
+function populateMunsellDropdown() {
+  const groupSel = document.getElementById("munsellGroup");
+  const chipSel  = document.getElementById("munsell");
+
+  groupSel.innerHTML = "";
+  chipSel.innerHTML = "";
+
+  const keys = Object.keys(munsellTable);
+
+  const groups = {
+    "10R": keys.filter(k => k.startsWith("10R")),
+    "7.5R": keys.filter(k => k.startsWith("7.5R")),
+    "5R": keys.filter(k => k.startsWith("5R")),
+    "2.5R": keys.filter(k => k.startsWith("2.5R")),
+
+    "10YR": keys.filter(k => k.startsWith("10YR")),
+    "7.5YR": keys.filter(k => k.startsWith("7.5YR")),
+    "5YR": keys.filter(k => k.startsWith("5YR")),
+    "2.5YR": keys.filter(k => k.startsWith("2.5YR")),
+
+    "10Y": keys.filter(k => k.startsWith("10Y ")),
+    "7.5Y": keys.filter(k => k.startsWith("7.5Y ")),
+    "5Y": keys.filter(k => k.startsWith("5Y ")),
+    "2.5Y": keys.filter(k => k.startsWith("2.5Y ")),
+
+    "Neutral (N)": keys.filter(k => k.startsWith("N ")),
+
+    "Gleys 1": keys.filter(k =>
+      ["5GY ", "10GY ", "5G ", "10G "].some(p => k.startsWith(p))
+    ),
+
+    "Gleys 2": keys.filter(k =>
+      ["5BG ", "10BG ", "5B ", "10B ", "5PB "].some(p => k.startsWith(p))
+    )
   };
-  for(const group in groups){
-    const og=document.createElement("optgroup");
-    og.label=group;
-    groups[group].sort().forEach(key=>{
-      const opt=document.createElement("option");
-      opt.value=key; opt.textContent=key;
-      og.appendChild(opt);
-    });
-    sel.appendChild(og);
+
+  // Fill the group dropdown
+  for (const group in groups) {
+    const opt = document.createElement("option");
+    opt.value = group;
+    opt.textContent = group;
+    groupSel.appendChild(opt);
   }
-  sel.value="10YR 4/3";
+
+  // When a group is selected, populate the chip dropdown
+  groupSel.onchange = () => {
+    const selectedGroup = groupSel.value;
+    const chips = groups[selectedGroup];
+
+    chipSel.innerHTML = "";
+    chips.sort().forEach(k => {
+      const opt = document.createElement("option");
+      opt.value = k;
+      opt.textContent = k;
+      chipSel.appendChild(opt);
+    });
+  };
+
+  // Trigger initial fill
+  groupSel.value = "10YR";
+  groupSel.onchange();
 }
 
 const units=[];
 const svgPreview=document.getElementById("svgPreview");
+
+let columnTitle = "";
+
+let groundOD = 0;
+let useOD = false;
 
 document.getElementById("addUnit").onclick=()=>{
   const top=parseFloat(topDepth.value);
@@ -200,6 +309,21 @@ document.getElementById("addUnit").onclick=()=>{
 document.getElementById("clearUnits").onclick=()=>{
   units.length=0;
   renderUnitsList();
+  renderSvg();
+};
+
+document.getElementById("columnTitle").oninput = (e) => {
+  columnTitle = e.target.value.trim();
+  renderSvg();
+};
+
+document.getElementById("groundOD").oninput = (e) => {
+  groundOD = parseFloat(e.target.value) || 0;
+  renderSvg();
+};
+
+document.getElementById("useOD").oninput = (e) => {
+  useOD = e.target.checked;
   renderSvg();
 };
 
@@ -377,131 +501,213 @@ function drawBoundary(svg,y,x1,x2,type){
   svg.appendChild(line);
 }
 
-function renderSvg(){
-  svgPreview.innerHTML="";
-  const svgNS="http://www.w3.org/2000/svg";
-  const pxPerCm=5;
-  const width=120;
-  const maxDepth=units.length?Math.max(...units.map(u=>u.bottom)):0;
-  const colX=40, colY=10;
+function renderSvg() {
+  svgPreview.innerHTML = "";
+svgPreview.setAttribute("style", "font-family: system-ui, sans-serif;");
+  const svgNS = "http://www.w3.org/2000/svg";
+  const pxPerCm = 5;
+  const width = 120;
+  const TITLE_OFFSET = 30;   // space for title
 
-  svgPreview.setAttribute("xmlns","http://www.w3.org/2000/svg");
-  svgPreview.setAttribute("width",width+80);
-  svgPreview.setAttribute("height",maxDepth*pxPerCm+40);
-  svgPreview.setAttribute("viewBox",`0 0 ${width+80} ${maxDepth*pxPerCm+40}`);
+  const maxDepth = units.length ? Math.max(...units.map(u => u.bottom)) : 0;
+  const colX = 60, colY = 10 + TITLE_OFFSET;
 
-  const defs=document.createElementNS(svgNS,"defs");
+  svgPreview.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  svgPreview.setAttribute("width", width + 80);
+  svgPreview.setAttribute("height", maxDepth * pxPerCm + TITLE_OFFSET + 40);
+  svgPreview.setAttribute("viewBox",
+    `0 0 ${width + 80} ${maxDepth * pxPerCm + TITLE_OFFSET + 40}`
+  );
+
+  const defs = document.createElementNS(svgNS, "defs");
   addPatterns(defs);
   svgPreview.appendChild(defs);
 
-  const bg=document.createElementNS(svgNS,"rect");
-  bg.setAttribute("x",0); bg.setAttribute("y",0);
-  bg.setAttribute("width",width+80);
-  bg.setAttribute("height",maxDepth*pxPerCm+40);
-  bg.setAttribute("fill","white");
+  const bg = document.createElementNS(svgNS, "rect");
+  bg.setAttribute("x", 0);
+  bg.setAttribute("y", 0);
+  bg.setAttribute("width", width + 80);
+  bg.setAttribute("height", maxDepth * pxPerCm + TITLE_OFFSET + 40);
+  bg.setAttribute("fill", "white");
   svgPreview.appendChild(bg);
 
-  const col=document.createElementNS(svgNS,"rect");
-  col.setAttribute("x",colX); col.setAttribute("y",colY);
-  col.setAttribute("width",width);
-  col.setAttribute("height",maxDepth*pxPerCm);
-  col.setAttribute("fill","none");
-  col.setAttribute("stroke","black");
+  // *** TITLE ***
+  if (columnTitle && columnTitle.trim() !== "") {
+    const titleText = document.createElementNS(svgNS, "text");
+    titleText.setAttribute("x", (width + 120) / 2);
+    titleText.setAttribute("y", 20);
+    titleText.setAttribute("text-anchor", "middle");
+    titleText.setAttribute("font-size", "18");
+    titleText.setAttribute("font-weight", "bold");
+    titleText.textContent = columnTitle;
+    svgPreview.appendChild(titleText);
+  }
+
+  // Column outline
+  const col = document.createElementNS(svgNS, "rect");
+  col.setAttribute("x", colX);
+  col.setAttribute("y", colY);
+  col.setAttribute("width", width);
+  col.setAttribute("height", maxDepth * pxPerCm);
+  col.setAttribute("fill", "none");
+  col.setAttribute("stroke", "black");
   svgPreview.appendChild(col);
 
   // PASS 1: units (fills + patterns)
-  units.forEach(u=>{
-    const yTop=colY+u.top*pxPerCm;
-    const h=(u.bottom-u.top)*pxPerCm;
+  units.forEach(u => {
+    const yTop = colY + u.top * pxPerCm;
+    const h = (u.bottom - u.top) * pxPerCm;
 
-    const base=document.createElementNS(svgNS,"rect");
-    base.setAttribute("x",colX);
-    base.setAttribute("y",yTop);
-    base.setAttribute("width",width);
-    base.setAttribute("height",h);
-    if(u.noFill){
-      base.setAttribute("fill","none");
-      base.setAttribute("fill-opacity","0");
-    }else{
-      base.setAttribute("fill",munsellToRGB(u.munsell));
-      base.setAttribute("fill-opacity","1");
+    const base = document.createElementNS(svgNS, "rect");
+    base.setAttribute("x", colX);
+    base.setAttribute("y", yTop);
+    base.setAttribute("width", width);
+    base.setAttribute("height", h);
+    if (u.noFill) {
+      base.setAttribute("fill", "none");
+      base.setAttribute("fill-opacity", "0");
+    } else {
+      base.setAttribute("fill", munsellToRGB(u.munsell));
+      base.setAttribute("fill-opacity", "1");
     }
-    base.setAttribute("stroke","none");
+    base.setAttribute("stroke", "none");
     svgPreview.appendChild(base);
 
-    if(u.pattern!=="none"){
-      const pat=document.createElementNS(svgNS,"rect");
-      pat.setAttribute("x",colX);
-      pat.setAttribute("y",yTop);
-      pat.setAttribute("width",width);
-      pat.setAttribute("height",h);
-      pat.setAttribute("fill",`url(#${u.pattern})`);
+    if (u.pattern !== "none") {
+      const pat = document.createElementNS(svgNS, "rect");
+      pat.setAttribute("x", colX);
+      pat.setAttribute("y", yTop);
+      pat.setAttribute("width", width);
+      pat.setAttribute("height", h);
+      pat.setAttribute("fill", `url(#${u.pattern})`);
       svgPreview.appendChild(pat);
     }
 
-    if(u.label){
-      const t=document.createElementNS(svgNS,"text");
-      t.setAttribute("x",colX+width+5);
-      t.setAttribute("y",yTop+h/2);
-      t.setAttribute("dominant-baseline","middle");
-      t.setAttribute("font-size","10");
-      t.textContent=u.label;
+    if (u.label) {
+      const t = document.createElementNS(svgNS, "text");
+      t.setAttribute("x", colX + width + 5);
+      t.setAttribute("y", yTop + h / 2);
+      t.setAttribute("dominant-baseline", "middle");
+      t.setAttribute("font-size", "10");
+      t.textContent = u.label;
       svgPreview.appendChild(t);
     }
   });
 
-  // PASS 2: boundaries on top
-  units.forEach(u=>{
-    const yTop=colY+u.top*pxPerCm;
-    const h=(u.bottom-u.top)*pxPerCm;
-    drawBoundary(svgPreview,yTop,colX,colX+width,u.boundary_upper);
-    drawBoundary(svgPreview,yTop+h,colX,colX+width,u.boundary_lower);
+  // PASS 2: boundaries
+  units.forEach(u => {
+    const yTop = colY + u.top * pxPerCm;
+    const h = (u.bottom - u.top) * pxPerCm;
+    drawBoundary(svgPreview, yTop, colX, colX + width, u.boundary_upper);
+    drawBoundary(svgPreview, yTop + h, colX, colX + width, u.boundary_lower);
   });
 
-  const tickInterval=20;
-  for(let d=0; d<=maxDepth; d+=tickInterval){
-    const y=colY+d*pxPerCm;
-    const line=document.createElementNS(svgNS,"line");
-    line.setAttribute("x1",colX-5); line.setAttribute("x2",colX);
-    line.setAttribute("y1",y); line.setAttribute("y2",y);
-    line.setAttribute("stroke","black");
-    svgPreview.appendChild(line);
+  // Depth ticks
+// Depth ticks with dynamic spacing
+let tickInterval;
+if (maxDepth < 200) tickInterval = 10;
+else if (maxDepth < 400) tickInterval = 20;
+else tickInterval = 50;
 
-    const t=document.createElementNS(svgNS,"text");
-    t.setAttribute("x",colX-8);
-    t.setAttribute("y",y+3);
-    t.setAttribute("text-anchor","end");
-    t.setAttribute("font-size","12");
-    t.textContent=d;
-    svgPreview.appendChild(t);
+for (let d = 0; d <= maxDepth; d += tickInterval) {
+  const y = colY + d * pxPerCm;
+
+  const line = document.createElementNS(svgNS, "line");
+  line.setAttribute("x1", colX - 5);
+  line.setAttribute("x2", colX);
+  line.setAttribute("y1", y);
+  line.setAttribute("y2", y);
+  line.setAttribute("stroke", "black");
+  svgPreview.appendChild(line);
+
+  let labelText;
+
+  if (useOD) {
+    // Convert depth (cm) → metres OD
+    const depthM = d / 100;
+    const odValue = groundOD - depthM;
+    labelText = odValue.toFixed(1);   // e.g., "112.3"
+  } else {
+    // Standard depth scale
+    labelText = d;                    // e.g., "120"
   }
 
-const axisLabel = document.createElementNS(svgNS, "text");
-
-// Position at vertical midpoint of the column
-const midY = colY + (maxDepth * pxPerCm) / 2;
-
-// Place slightly left of the tick marks
-axisLabel.setAttribute("x", colX - 30);
-axisLabel.setAttribute("y", midY);
-
-// Rotate 90° counter‑clockwise around that point
-axisLabel.setAttribute("transform", `rotate(-90 ${colX - 30} ${midY})`);
-
-axisLabel.setAttribute("text-anchor", "middle");
-axisLabel.setAttribute("font-size", "14");
-axisLabel.textContent = "Depth (cm)";
-
-svgPreview.appendChild(axisLabel);
-
+  const t = document.createElementNS(svgNS, "text");
+  t.setAttribute("x", colX - 8);
+  t.setAttribute("y", y + 4);
+  t.setAttribute("text-anchor", "end");
+  t.setAttribute("font-size", "12");
+  t.textContent = labelText;
+  svgPreview.appendChild(t);
 }
+
+
+
+  // Depth axis label
+  const axisLabel = document.createElementNS(svgNS, "text");
+  const midY = colY + (maxDepth * pxPerCm) / 2;
+  axisLabel.setAttribute("x", colX - 45);
+  axisLabel.setAttribute("y", midY);
+  axisLabel.setAttribute("transform", `rotate(-90 ${colX - 45} ${midY})`);
+  axisLabel.setAttribute("text-anchor", "middle");
+  axisLabel.setAttribute("font-size", "16");
+axisLabel.textContent = useOD ? "Elevation (m OD)" : "Depth (cm)";
+  svgPreview.appendChild(axisLabel);
+}
+
+document.getElementById("downloadPdf").onclick = () => {
+  const svg = document.getElementById("svgPreview").outerHTML;
+
+  // A4 size in pixels at 96dpi (browser default)
+  const A4_WIDTH = 794;   // 210mm
+  const A4_HEIGHT = 1123; // 297mm
+
+  const win = window.open("", "_blank");
+
+  win.document.write(`
+    <html>
+      <head>
+        <title>Stratigraphy PDF</title>
+        <style>
+          @page { size: A4 portrait; margin: 0; }
+          body {
+            margin: 0;
+            padding: 0;
+            width: ${A4_WIDTH}px;
+            height: ${A4_HEIGHT}px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+          .wrapper {
+            width: ${A4_WIDTH - 80}px;   /* margins inside page */
+            height: ${A4_HEIGHT - 80}px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+          svg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="wrapper">${svg}</div>
+      </body>
+    </html>
+  `);
+
+  win.document.close();
+  win.focus();
+  win.print();
+};
 
 populateMunsellDropdown();
 renderUnitsList();
 renderSvg();
 </script>
-
 </body>
 </html>
-
-
