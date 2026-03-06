@@ -58,6 +58,10 @@
   <span>Show elevation (m OD) instead of depth (cm)</span>
 </label>
 
+<label class="inline-check">
+  <input type="checkbox" id="plotFromSurface" checked>
+  Plot from ground surface
+</label>
 
   <label>Top depth (cm)
     <input type="number" id="topDepth" value="0" step="0.1">
@@ -503,20 +507,39 @@ function drawBoundary(svg,y,x1,x2,type){
 
 function renderSvg() {
   svgPreview.innerHTML = "";
-svgPreview.setAttribute("style", "font-family: system-ui, sans-serif;");
+  svgPreview.setAttribute("style", "font-family: system-ui, sans-serif;");
   const svgNS = "http://www.w3.org/2000/svg";
   const pxPerCm = 5;
   const width = 120;
-  const TITLE_OFFSET = 30;   // space for title
+  const TITLE_OFFSET = 30;
+
+  // -------------------------------
+  // NEW: Determine vertical offset
+  // -------------------------------
+  const plotFromSurface = document.getElementById("plotFromSurface").checked;
+
+  let verticalOffset = 0;
+  if (!plotFromSurface && units.length > 0) {
+    verticalOffset = Math.min(...units.map(u => u.top));
+  }
 
   const maxDepth = units.length ? Math.max(...units.map(u => u.bottom)) : 0;
-  const colX = 60, colY = 10 + TITLE_OFFSET;
+											
+
+  const colX = 60;
+  const colY = 10 + TITLE_OFFSET;
+
+  // -------------------------------
+  // UPDATED: SVG height & viewBox use (maxDepth - verticalOffset)
+  // -------------------------------
+  const effectiveHeight = (maxDepth - verticalOffset) * pxPerCm;
 
   svgPreview.setAttribute("xmlns", "http://www.w3.org/2000/svg");
   svgPreview.setAttribute("width", width + 80);
-  svgPreview.setAttribute("height", maxDepth * pxPerCm + TITLE_OFFSET + 40);
-  svgPreview.setAttribute("viewBox",
-    `0 0 ${width + 80} ${maxDepth * pxPerCm + TITLE_OFFSET + 40}`
+  svgPreview.setAttribute("height", effectiveHeight + TITLE_OFFSET + 40);
+  svgPreview.setAttribute(
+    "viewBox",
+    `0 0 ${width + 80} ${effectiveHeight + TITLE_OFFSET + 40}`
   );
 
   const defs = document.createElementNS(svgNS, "defs");
@@ -527,11 +550,13 @@ svgPreview.setAttribute("style", "font-family: system-ui, sans-serif;");
   bg.setAttribute("x", 0);
   bg.setAttribute("y", 0);
   bg.setAttribute("width", width + 80);
-  bg.setAttribute("height", maxDepth * pxPerCm + TITLE_OFFSET + 40);
+  bg.setAttribute("height", effectiveHeight + TITLE_OFFSET + 40);
   bg.setAttribute("fill", "white");
   svgPreview.appendChild(bg);
 
-  // *** TITLE ***
+  // -------------------------------
+  // TITLE
+  // -------------------------------
   if (columnTitle && columnTitle.trim() !== "") {
     const titleText = document.createElementNS(svgNS, "text");
     titleText.setAttribute("x", (width + 120) / 2);
@@ -543,19 +568,23 @@ svgPreview.setAttribute("style", "font-family: system-ui, sans-serif;");
     svgPreview.appendChild(titleText);
   }
 
-  // Column outline
+  // -------------------------------
+  // COLUMN OUTLINE
+  // -------------------------------
   const col = document.createElementNS(svgNS, "rect");
   col.setAttribute("x", colX);
   col.setAttribute("y", colY);
   col.setAttribute("width", width);
-  col.setAttribute("height", maxDepth * pxPerCm);
+  col.setAttribute("height", effectiveHeight);
   col.setAttribute("fill", "none");
   col.setAttribute("stroke", "black");
   svgPreview.appendChild(col);
 
-  // PASS 1: units (fills + patterns)
+  // -------------------------------
+  // PASS 1: UNITS
+  // -------------------------------
   units.forEach(u => {
-    const yTop = colY + u.top * pxPerCm;
+    const yTop = colY + (u.top - verticalOffset) * pxPerCm;   // UPDATED
     const h = (u.bottom - u.top) * pxPerCm;
 
     const base = document.createElementNS(svgNS, "rect");
@@ -563,6 +592,7 @@ svgPreview.setAttribute("style", "font-family: system-ui, sans-serif;");
     base.setAttribute("y", yTop);
     base.setAttribute("width", width);
     base.setAttribute("height", h);
+
     if (u.noFill) {
       base.setAttribute("fill", "none");
       base.setAttribute("fill-opacity", "0");
@@ -594,64 +624,86 @@ svgPreview.setAttribute("style", "font-family: system-ui, sans-serif;");
     }
   });
 
-  // PASS 2: boundaries
+  // -------------------------------
+  // PASS 2: BOUNDARIES
+  // -------------------------------
   units.forEach(u => {
-    const yTop = colY + u.top * pxPerCm;
+    const yTop = colY + (u.top - verticalOffset) * pxPerCm;   // UPDATED
     const h = (u.bottom - u.top) * pxPerCm;
+
     drawBoundary(svgPreview, yTop, colX, colX + width, u.boundary_upper);
     drawBoundary(svgPreview, yTop + h, colX, colX + width, u.boundary_lower);
   });
 
-  // Depth ticks
-// Depth ticks with dynamic spacing
-let tickInterval;
-if (maxDepth < 200) tickInterval = 10;
-else if (maxDepth < 400) tickInterval = 20;
-else tickInterval = 50;
+  // -------------------------------
+  // DEPTH TICKS
+  // -------------------------------
+  let tickInterval;
+  if (maxDepth < 200) tickInterval = 10;
+  else if (maxDepth < 400) tickInterval = 20;
+  else tickInterval = 50;
 
-for (let d = 0; d <= maxDepth; d += tickInterval) {
-  const y = colY + d * pxPerCm;
+												   
+							   
 
-  const line = document.createElementNS(svgNS, "line");
-  line.setAttribute("x1", colX - 5);
-  line.setAttribute("x2", colX);
-  line.setAttribute("y1", y);
-  line.setAttribute("y2", y);
-  line.setAttribute("stroke", "black");
-  svgPreview.appendChild(line);
+													   
+									
+								
+							 
+							 
+									   
+							   
 
-  let labelText;
+  for (let d = 0; d <= maxDepth; d += tickInterval) {
+    const y = colY + (d - verticalOffset) * pxPerCm;   // UPDATED
 
-  if (useOD) {
-    // Convert depth (cm) → metres OD
-    const depthM = d / 100;
-    const odValue = groundOD - depthM;
-    labelText = odValue.toFixed(1);   // e.g., "112.3"
-  } else {
-    // Standard depth scale
-    labelText = d;                    // e.g., "120"
+    const line = document.createElementNS(svgNS, "line");
+    line.setAttribute("x1", colX - 5);
+    line.setAttribute("x2", colX);
+    line.setAttribute("y1", y);
+    line.setAttribute("y2", y);
+    line.setAttribute("stroke", "black");
+    svgPreview.appendChild(line);
+													
+   
+
+													
+								
+							 
+									   
+									
+    let labelText;
+							
+ 
+
+    if (useOD) {
+      const depthM = d / 100;
+      const odValue = groundOD - depthM;
+      labelText = odValue.toFixed(1);
+    } else {
+      labelText = d;   // IMPORTANT: actual depth preserved
+    }
+
+    const t = document.createElementNS(svgNS, "text");
+    t.setAttribute("x", colX - 8);
+    t.setAttribute("y", y + 4);
+    t.setAttribute("text-anchor", "end");
+    t.setAttribute("font-size", "12");
+    t.textContent = labelText;
+    svgPreview.appendChild(t);
   }
 
-  const t = document.createElementNS(svgNS, "text");
-  t.setAttribute("x", colX - 8);
-  t.setAttribute("y", y + 4);
-  t.setAttribute("text-anchor", "end");
-  t.setAttribute("font-size", "12");
-  t.textContent = labelText;
-  svgPreview.appendChild(t);
-}
-
-
-
-  // Depth axis label
+  // -------------------------------
+  // DEPTH AXIS LABEL
+  // -------------------------------
   const axisLabel = document.createElementNS(svgNS, "text");
-  const midY = colY + (maxDepth * pxPerCm) / 2;
+  const midY = colY + (effectiveHeight / 2);   // UPDATED
   axisLabel.setAttribute("x", colX - 45);
   axisLabel.setAttribute("y", midY);
   axisLabel.setAttribute("transform", `rotate(-90 ${colX - 45} ${midY})`);
   axisLabel.setAttribute("text-anchor", "middle");
   axisLabel.setAttribute("font-size", "16");
-axisLabel.textContent = useOD ? "Elevation (m OD)" : "Depth (cm)";
+  axisLabel.textContent = useOD ? "Elevation (m OD)" : "Depth (cm)";
   svgPreview.appendChild(axisLabel);
 }
 
@@ -711,3 +763,4 @@ renderSvg();
 </script>
 </body>
 </html>
+
