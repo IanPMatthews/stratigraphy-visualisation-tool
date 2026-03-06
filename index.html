@@ -14,155 +14,377 @@
 </script>
 
 <style>
-  body { font-family: system-ui, sans-serif; display: flex; gap: 2rem; padding: 1rem; margin: 0; }
-  .panel { width: 380px; }
-  h1 { font-size: 1.3rem; margin: 0 0 0.5rem 0; }
-  h2 { margin: 0 0 0.5rem 0; }
-  label { display: block; margin-top: 0.5rem; font-size: 0.9rem; }
-  input, select { width: 100%; padding: 0.3rem; font-size: 0.9rem; }
-  button { margin-top: 0.7rem; padding: 0.4rem 0.6rem; font-size: 0.9rem; }
-  .units-list { margin-top: 1rem; border: 1px solid #ccc; padding: 0.5rem; max-height: 260px; overflow-y: auto; font-size: 0.85rem; }
-  .unit-item { display: flex; justify-content: space-between; align-items: center; padding: 0.2rem 0; border-bottom: 1px solid #eee; }
-  .unit-item:last-child { border-bottom: none; }
-  .svg-container { border: 1px solid #ccc; padding: 0.5rem; background: #fafafa; max-width: 320px; max-height: 600px; overflow: auto; }
-  .inline-check {
-  display: flex !important;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
-}
+  body { 
+    font-family: system-ui, sans-serif; 
+    display: flex; 
+    gap: 2rem; 
+    padding: 1rem; 
+    margin: 0; 
+  }
 
-.inline-check input[type="checkbox"] {
-  width: auto !important;
-  padding: 0;
-  margin: 0;
-}
+  /* Left-hand control panel */
+  .panel { 
+    width: 380px; 
+    margin-bottom: 1rem; 
+  }
+
+  h1 { 
+    font-size: 1.3rem; 
+    margin: 0 0 0.5rem 0; 
+  }
+
+  h2 { 
+    margin: 0 0 0.5rem 0; 
+  }
+
+  label { 
+    display: block; 
+    margin-top: 0.5rem; 
+    font-size: 0.9rem; 
+  }
+
+  input, select { 
+    width: 100%; 
+    padding: 0.3rem; 
+    font-size: 0.9rem; 
+  }
+
+  button { 
+    margin-top: 0.7rem; 
+    padding: 0.4rem 0.6rem; 
+    font-size: 0.9rem; 
+  }
+
+  /* ---------------- Units list ---------------- */
+  .units-list { 
+    margin-top: 1rem; 
+    border: 1px solid #ccc; 
+    padding: 0.5rem; 
+    max-height: 260px; 
+    overflow-y: auto; 
+    font-size: 0.85rem; 
+  }
+
+  .unit-item { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 0.2rem 0; 
+    border-bottom: 1px solid #eee; 
+  }
+
+  .unit-item:last-child { 
+    border-bottom: none; 
+  }
+
+  /* ---------------- SVG Preview ---------------- */
+  .svg-container { 
+    border: 1px solid #ccc; 
+    padding: 0.5rem; 
+    background: #fafafa; 
+    flex: 1 1 auto; 
+    min-width: 0; 
+    max-height: 600px; 
+    overflow: auto; 
+  }
+
+  /* Right-hand preview panel should flex */
+  .preview-panel {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-bottom: 1rem;
+  }
+
+  /* ---------------- Inline checkboxes ---------------- */
+  .inline-check {
+    display: flex !important;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+
+  .inline-check input[type="checkbox"] {
+    width: auto !important;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* ---------------- Form row (for multi-column layout) ---------------- */
+  .form-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .form-row label {
+    flex: 1;
+    margin-top: 0.5rem;
+  }
+
+  /* ---------------- Collapsible section summaries ---------------- */
+  details summary {
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    list-style: none;
+  }
+
+  details[open] summary::after {
+    content: "▼";
+    float: right;
+  }
+
+  details summary::after {
+    content: "▶";
+    float: right;
+  }
+
+  /* ---------------- Download panel fixed at bottom ---------------- */
+  .download-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #f5f5f5;
+    border-top: 1px solid #ccc;
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    z-index: 1000;
+  }
+
+  /* ---------------- About Button ---------------- */
+  .about-button {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    z-index: 1500;
+  }
+
+  /* ---------------- Modal ---------------- */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+  }
+
+  .modal-content {
+    background: white;
+    margin: 5% auto;
+    padding: 1.5rem;
+    border: 1px solid #ccc;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    border-radius: 6px;
+  }
+
+  .close {
+    float: right;
+    font-size: 1.4rem;
+    cursor: pointer;
+  }
 </style>
+
+
 </head>
 <body>
-
+<!-- LEFT PANEL -->
 <div class="panel">
   <h1>Core Stratigraphy</h1>
-  
-  <label>Column title
-  <input type="text" id="columnTitle" placeholder="BH1 or Group 1">
+
+  <!-- ---------------- Core Information ---------------- -->
+  <details open>
+    <summary>Core information</summary>
+    <label>Column title
+      <input type="text" id="columnTitle" placeholder="BH1 or Group 1">
+    </label>
+
+    <label>Ground surface altitude (m OD)
+      <input type="number" id="groundOD" value="0" step="0.01">
+    </label>
+
+    <label class="inline-check">
+      <input type="checkbox" id="useOD">
+      Show elevation (m OD) instead of depth (cm)
+    </label>
+
+    <label class="inline-check">
+      <input type="checkbox" id="plotFromSurface" checked>
+      Plot from ground surface
+    </label>
+  </details>
+
+  <!-- ---------------- Data Entry ---------------- -->
+  <details>
+    <summary>Data Entry</summary>
+
+    <label>Top depth (cm)
+      <input type="number" id="topDepth" value="0" step="0.1">
+    </label>
+
+    <label>Bottom depth (cm)
+      <input type="number" id="bottomDepth" value="10" step="0.1">
+    </label>
+
+    <label>Munsell colour
+      <select id="munsellGroup"></select>
+      <select id="munsell"></select>
+    </label>
+
+    <div class="form-row">
+      <label>T-S pattern
+  <select id="pattern">
+    <option value="none">None</option>
+    <option value="sphagnum">Moss peat - Tb (~)</option>
+    <option value="herbaceous">Herbaceous peat - Th (vertical lines)</option>
+    <option value="woody">Woody peat - Tl (vvv)</option>
+    <option value="detritus">Organic detritus - Dg (angled dashes)</option>
+    <option value="substantia_humosa">Substantia humosa - Sh (dashes)</option>
+    <option value="laminated">Laminated/varved lake mud (horizontal bars)</option>
+    <option value="clay">Silt - Ag (LLLL)</option>
+    <option value="silt">Clay - As (bold LLL)</option>
+    <option value="fine_sand">Fine sand - Ga (small dots)</option>
+    <option value="medium_sand">Medium sand - Gs (medium dots)</option>
+    <option value="coarse_sand">Coarse sand - Gg (open circles)</option>
+    <option value="gyttja">Gyttja - Ld (cross hatch)</option>
+    <option value="marl">Marl - Lc (UUUU)</option>
+  </select>
 </label>
+	  
+	  
+      <label>Density
+        <select id="density">
+          <option value="1.7">Low (1)</option>
+          <option value="1.3" selected>Medium (2-3)</option>
+          <option value="1">High (4)</option>
+        </select>
+      </label>
+      <label>Scale (0.5-4)
+        <input id="scale" type="number" min="0.5" max="4" step="0.01" value="1">
+      </label>
+    </div>
 
-<label>Ground surface altitude (m OD)
-  <input type="number" id="groundOD" value="0" step="0.01">
-</label>
+    <div class="form-row">
+      <label>Upper boundary style
+        <select id="boundaryUpper">
+          <option value="rapid">Rapid (solid)</option>
+          <option value="diffuse">Diffuse (dashed)</option>
+        </select>
+      </label>
+      <label>Lower boundary style
+        <select id="boundaryLower">
+          <option value="rapid">Rapid (solid)</option>
+          <option value="diffuse">Diffuse (dashed)</option>
+        </select>
+      </label>
+    </div>
 
-<label class="inline-check">
-  <input type="checkbox" id="useOD">
-  <span>Show elevation (m OD) instead of depth (cm)</span>
-</label>
+    <label class="inline-check">
+      <input type="checkbox" id="noFill">
+      No background fill (symbols only)
+    </label>
 
-<label class="inline-check">
-  <input type="checkbox" id="plotFromSurface" checked>
-  Plot from ground surface
-</label>
+    <label>Label
+      <input type="text" id="label" value="Clayey gyttja">
+    </label>
 
-  <label>Top depth (cm)
-    <input type="number" id="topDepth" value="0" step="0.1">
-  </label>
+    <button id="addUnit">Add unit</button>
+  </details>
 
-  <label>Bottom depth (cm)
-    <input type="number" id="bottomDepth" value="10" step="0.1">
-  </label>
-
-  <label>Munsell colour
-  <select id="munsellGroup"></select>
-  
-	<select id="munsell"></select>
-  </label>
-
-  <label>Troels–Smith lithology pattern
-    <select id="pattern">
-      <option value="none">None</option>
-      <option value="sphagnum">Moss peat - Tb (~)</option>
-      <option value="herbaceous">Herbaceous peat - Th (vertical lines)</option>
-      <option value="woody">Woody peat - Tl (vvv)</option>
-      <option value="detritus">Organic detritus - Dg (angled dashes)</option>
-      <option value="laminated">Laminated/varved lake mud (horizontal bars)</option>
-      <option value="clay">Silt - Ag (LLLL)</option>
-      <option value="silt">Clay - As (bold LLL)</option>
-      <option value="fine_sand">Fine sand - Ga (small dots)</option>
-      <option value="medium_sand">Medium sand - Gs (medium dots)</option>
-      <option value="coarse_sand">Coarse sand - Gg (open circles)</option>
-      <option value="gyttja">Gyttja - Ld (cross hatch)</option>
-      <option value="marl">Marl - Lc (UUUU)</option>
-    </select>
-  </label>
-
-  <label>Upper boundary style
-    <select id="boundaryUpper">
-      <option value="rapid">Rapid (solid)</option>
-      <option value="diffuse">Diffuse (dashed)</option>
-    </select>
-  </label>
-
-  <label>Lower boundary style
-    <select id="boundaryLower">
-      <option value="rapid">Rapid (solid)</option>
-      <option value="diffuse">Diffuse (dashed)</option>
-    </select>
-  </label>
-
- <label class="inline-check">
-  <input type="checkbox" id="noFill">
-  <span>No background fill (symbols only)</span>
-</label>
-
-  <label>Label
-    <input type="text" id="label" value="Clayey gyttja">
-  </label>
-
-  <button id="addUnit">Add unit</button>
-  <button id="clearUnits" type="button">Clear all</button>
-
-  <div class="units-list" id="unitsList"></div>
-
-  <button id="downloadSvg" type="button">Download SVG</button>
-  <button id="downloadPdf" type="button">Download PDF</button>
+  <!-- ---------------- Edits ---------------- -->
+  <details>
+    <summary>Edits</summary>
+    <div class="units-list" id="unitsList"></div>
+    <button id="clearUnits" type="button">Clear all</button>
+  </details>
 </div>
 
-<div class="panel">
+<!-- ---------------- Preview ---------------- -->
+<<!-- RIGHT PANEL -->
+<div class="preview-panel">
   <h2>Preview</h2>
   <div class="svg-container">
     <svg id="svgPreview"></svg>
   </div>
 </div>
 
-<div class="panel" style="max-width: 360px;">
-  <h2>About this tool</h2>
-  <p style="font-size:0.9rem;">
-This application generates stratigraphic column diagrams using 
-    Troels–Smith lithological symbols and Munsell colours. 
-    It is designed to display a column of soft sediment core data
-	used in palaeoclimatic, palaeoenvironmental, and sedimentological, invesitigations.
-	</p>
-	<p style="font-size:0.9rem;">
-	The figure may be downloaded in .svg format and edited using any suitable vector graphics tool.
-	<p style="font-size:0.9rem;">
-	To specify diffuse changes between units the upper and lower boundaries must be complementary 
-	i.e. a diffuse lower boundary in unit 1 must be matched by a diffuse upper boundary in unit 2.
-	<p style="font-size:0.9rem;">
-	If no single lithostratigraphy dominates the unit, symbols can be overlain, 
-	to ensure these do not obscure lower layers you must check the 'No background Fill' option.
-  </p>
 
-  <h3>Author</h3>
-  <p style="font-size:0.9rem;">
-    <strong>Dr Ian Matthews</strong><br>
-  </p>
 
-  <h3>Citation</h3>
-  <p style="font-size:0.9rem;">
-    Matthews, I.P. (2026). <em> Core Stratigraphy Visualisation Tool</em> (Version 1.0). 
-    Computer software.
-  </p>
+<!-- ---------------- Download Panel (fixed bottom) ---------------- -->
+<div class="download-panel">
+  <button id="downloadSvg" type="button">Download SVG</button>
+  <button id="downloadPdf" type="button">Download PDF</button>
 </div>
+
+<!-- ⭐ NEW: ABOUT BUTTON -->
+<button id="aboutBtn" class="about-button">About</button>
+
+<!-- ⭐ NEW: ABOUT MODAL -->
+<div id="aboutModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+
+    <h2>About this tool</h2>
+    <p style="font-size:0.9rem;">
+      This application generates stratigraphic column diagrams using 
+      Troels–Smith lithological symbols and Munsell colours. 
+      It is designed to display a column of soft sediment core data
+      used in palaeoclimatic, palaeoenvironmental, and sedimentological investigations.
+    </p>
+
+    <p style="font-size:0.9rem;">
+      The figure may be downloaded in .svg format and edited using any suitable vector graphics tool.
+    </p>
+
+    <p style="font-size:0.9rem;">
+      To specify diffuse changes between units the upper and lower boundaries must be complementary 
+      i.e. a diffuse lower boundary in unit 1 must be matched by a diffuse upper boundary in unit 2.
+    </p>
+
+    <p style="font-size:0.9rem;">
+      If no single lithostratigraphy dominates the unit, symbols can be overlain. 
+      To ensure these do not obscure lower layers you must check the 'No background Fill' option.
+    </p>
+
+    <h3>Author</h3>
+    <p style="font-size:0.9rem;">
+      <strong>Dr Ian Matthews</strong><br>
+    </p>
+
+    <h3>Citation</h3>
+    <p style="font-size:0.9rem;">
+      Matthews, I.P. (2026). <em>Core Stratigraphy Visualisation Tool</em> (Version 1.0). 
+      Computer software.
+    </p>
+  </div>
+</div>
+
+<!-- ⭐ NEW: MODAL SCRIPT -->
+<script>
+  const modal = document.getElementById("aboutModal");
+  const btn = document.getElementById("aboutBtn");
+  const span = document.querySelector(".close");
+
+  btn.onclick = () => modal.style.display = "block";
+  span.onclick = () => modal.style.display = "none";
+  window.onclick = (e) => {
+    if (e.target === modal) modal.style.display = "none";
+  };
+</script>
+
 
 <script>
 document.getElementById("downloadPdf").onclick = () => {
@@ -289,23 +511,37 @@ let columnTitle = "";
 let groundOD = 0;
 let useOD = false;
 
-document.getElementById("addUnit").onclick=()=>{
-  const top=parseFloat(topDepth.value);
-  const bottom=parseFloat(bottomDepth.value);
-  if(isNaN(top)||isNaN(bottom)||bottom<=top){
-    alert("Bottom depth must be greater than top depth."); return;
+document.getElementById("addUnit").onclick = () => {
+  const top = parseFloat(topDepth.value);
+  const bottom = parseFloat(bottomDepth.value);
+
+  if (isNaN(top) || isNaN(bottom) || bottom <= top) {
+    alert("Bottom depth must be greater than top depth.");
+    return;
   }
+
+  // Unique ID for this unit's pattern
+  const id = crypto.randomUUID();
+
   units.push({
     top,
     bottom,
-    munsell:munsell.value,
-    pattern:pattern.value,
-    boundary_upper:boundaryUpper.value,
-    boundary_lower:boundaryLower.value,
-    noFill:noFill.checked,
-    label:label.value.trim()
+    munsell: munsell.value,
+    pattern: pattern.value,
+    boundary_upper: boundaryUpper.value,
+    boundary_lower: boundaryLower.value,
+    noFill: noFill.checked,
+    label: label.value.trim(),
+
+    // 🔥 NEW: per‑unit symbol controls
+    scale: parseFloat(scale.value),
+    density: parseFloat(density.value),
+
+    // 🔥 NEW: unique pattern ID for this unit
+    patternId: `${pattern.value}_${id}`
   });
-  units.sort((a,b)=>a.top-b.top);
+
+  units.sort((a, b) => a.top - b.top);
   renderUnitsList();
   renderSvg();
 };
@@ -356,144 +592,226 @@ function renderUnitsList(){
   });
 }
 
-function addPatterns(defs){
-  const svgNS="http://www.w3.org/2000/svg";
 
-  let p=document.createElementNS(svgNS,"pattern");
-  p.id="sphagnum"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",20); p.setAttribute("height",14);
-  let sp=document.createElementNS(svgNS,"path");
-  sp.setAttribute("d","M0 6 Q4 2 8 6 T16 6");
-  sp.setAttribute("stroke","black"); sp.setAttribute("fill","none");
-  p.appendChild(sp); defs.appendChild(p);
+function addPatterns(defs, density = 1, scale = 1, patternId) {
+  const svgNS = "http://www.w3.org/2000/svg";
 
-  p=document.createElementNS(svgNS,"pattern");
-  p.id="herbaceous"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",8); p.setAttribute("height",8);
-  let v=document.createElementNS(svgNS,"line");
-  v.setAttribute("x1",4); v.setAttribute("y1",0);
-  v.setAttribute("x2",4); v.setAttribute("y2",8);
-  v.setAttribute("stroke","black");
-  p.appendChild(v); defs.appendChild(p);
+  // Derive the base pattern name from patternId (handles names with underscores)
+  let baseName = patternId;
+  if (patternId && patternId.includes("_")) {
+    const parts = patternId.split("_");
+    baseName = parts.slice(0, -1).join("_");
+  }
 
-  p=document.createElementNS(svgNS,"pattern");
-  p.id="woody"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",12); p.setAttribute("height",10);
-  let w=document.createElementNS(svgNS,"polyline");
-  w.setAttribute("points","0,2 3,8 6,2");
-  w.setAttribute("stroke","black"); w.setAttribute("fill","none");
-  p.appendChild(w); defs.appendChild(p);
+  function makePattern(baseW, baseH, drawFn) {
+    const p = document.createElementNS(svgNS, "pattern");
+    p.id = patternId; // unique per unit
+    p.setAttribute("patternUnits", "userSpaceOnUse");
+    p.setAttribute("patternContentUnits", "userSpaceOnUse");
 
-p = document.createElementNS(svgNS,"pattern");
-p.id = "detritus";
-p.setAttribute("patternUnits","userSpaceOnUse");
-p.setAttribute("width",20);
-p.setAttribute("height",20);
+    // Tile spacing scales with density
+    p.setAttribute("width", baseW * density);
+    p.setAttribute("height", baseH * density);
 
-// Line 1: /
-let d1 = document.createElementNS(svgNS,"line");
-d1.setAttribute("x1",0);  d1.setAttribute("y1",4);
-d1.setAttribute("x2",8); d1.setAttribute("y2",0);
-d1.setAttribute("stroke","black");
+    // Symbol size scales with scale
+    p.setAttribute("patternTransform", `scale(${scale})`);
 
-// Line 2: / (offset)
-let d2 = document.createElementNS(svgNS,"line");
-d2.setAttribute("x1",-8); d2.setAttribute("y1",4);
-d2.setAttribute("x2",0);  d2.setAttribute("y2",0);
-d2.setAttribute("stroke","black");
+    drawFn(p, baseW, baseH);
+    defs.appendChild(p);
+    return p;
+  }
 
-// Line 3: \ 
-let d3 = document.createElementNS(svgNS,"line");
-d3.setAttribute("x1",12);  d3.setAttribute("y1",12);
-d3.setAttribute("x2",20); d3.setAttribute("y2",16);
-d3.setAttribute("stroke","black");
+  // ---------------- Pattern selection ----------------
+  switch (baseName) {
 
+    case "sphagnum":
+      makePattern(20, 14, (p) => {
+        const sp = document.createElementNS(svgNS, "path");
+        sp.setAttribute("d", "M0 6 Q4 2 8 6 T16 6");
+        sp.setAttribute("stroke", "black");
+        sp.setAttribute("fill", "none");
+        p.appendChild(sp);
+      });
+      break;
 
-p.appendChild(d1);
-p.appendChild(d2);
-p.appendChild(d3);
-defs.appendChild(p);
+    case "herbaceous":
+      makePattern(8, 8, (p) => {
+        const v = document.createElementNS(svgNS, "line");
+        v.setAttribute("x1", 4); v.setAttribute("y1", 0);
+        v.setAttribute("x2", 4); v.setAttribute("y2", 8);
+        v.setAttribute("stroke", "black");
+        p.appendChild(v);
+      });
+      break;
 
-  p=document.createElementNS(svgNS,"pattern");
-  p.id="laminated"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",8); p.setAttribute("height",8);
-  let bar=document.createElementNS(svgNS,"rect");
-  bar.setAttribute("x",0); bar.setAttribute("y",0);
-  bar.setAttribute("width",8); bar.setAttribute("height",1.5);
-  bar.setAttribute("fill","black");
-  p.appendChild(bar); defs.appendChild(p);
+    case "woody":
+      makePattern(12, 10, (p) => {
+        const w = document.createElementNS(svgNS, "polyline");
+        w.setAttribute("points", "0,2 3,8 6,2");
+        w.setAttribute("stroke", "black");
+        w.setAttribute("fill", "none");
+        p.appendChild(w);
+      });
+      break;
 
-  p=document.createElementNS(svgNS,"pattern");
-  p.id="clay"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",14); p.setAttribute("height",14);
-  let cL=document.createElementNS(svgNS,"polyline");
-  cL.setAttribute("points","0,2 0,8 4,8");
-  cL.setAttribute("stroke","black"); cL.setAttribute("stroke-width",1);
-  cL.setAttribute("fill","none");
-  p.appendChild(cL); defs.appendChild(p);
+    case "detritus":
+      makePattern(20, 20, (p) => {
+        const lines = [
+          [0,4,8,0],
+          [-8,4,0,0],
+          [12,12,20,16]
+        ];
+        lines.forEach(([x1,y1,x2,y2]) => {
+          const l = document.createElementNS(svgNS, "line");
+          l.setAttribute("x1", x1);
+          l.setAttribute("y1", y1);
+          l.setAttribute("x2", x2);
+          l.setAttribute("y2", y2);
+          l.setAttribute("stroke", "black");
+          p.appendChild(l);
+        });
+      });
+      break;
 
-  p=document.createElementNS(svgNS,"pattern");
-  p.id="silt"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",14); p.setAttribute("height",14);
-  let sL=document.createElementNS(svgNS,"polyline");
-  sL.setAttribute("points","0,2 0,8 4,8");
-  sL.setAttribute("stroke","black"); sL.setAttribute("stroke-width",2);
-  sL.setAttribute("fill","none");
-  p.appendChild(sL); defs.appendChild(p);
+    case "substantia_humosa":
+      makePattern(14, 8, (p, w) => {
+        const dash = 5;
+        const offset = (w * density) / 2;
 
-  p=document.createElementNS(svgNS,"pattern");
-  p.id="fine_sand"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",6); p.setAttribute("height",6);
-  let fs=document.createElementNS(svgNS,"circle");
-  fs.setAttribute("cx",2); fs.setAttribute("cy",2); fs.setAttribute("r",0.8);
-  fs.setAttribute("fill","black");
-  p.appendChild(fs); defs.appendChild(p);
+        const s1 = document.createElementNS(svgNS, "line");
+        s1.setAttribute("x1", 1);
+        s1.setAttribute("y1", 2);
+        s1.setAttribute("x2", 1 + dash);
+        s1.setAttribute("y2", 2);
+        s1.setAttribute("stroke", "black");
 
-  p=document.createElementNS(svgNS,"pattern");
-  p.id="medium_sand"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",8); p.setAttribute("height",8);
-  let ms=document.createElementNS(svgNS,"circle");
-  ms.setAttribute("cx",3); ms.setAttribute("cy",3); ms.setAttribute("r",1.4);
-  ms.setAttribute("fill","black");
-  p.appendChild(ms); defs.appendChild(p);
+        const s2 = document.createElementNS(svgNS, "line");
+        s2.setAttribute("x1", offset);
+        s2.setAttribute("y1", 6);
+        s2.setAttribute("x2", offset + dash);
+        s2.setAttribute("y2", 6);
+        s2.setAttribute("stroke", "black");
 
-  p=document.createElementNS(svgNS,"pattern");
-  p.id="coarse_sand"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",10); p.setAttribute("height",10);
-  let cs=document.createElementNS(svgNS,"circle");
-  cs.setAttribute("cx",4); cs.setAttribute("cy",4); cs.setAttribute("r",2);
-  cs.setAttribute("fill","none"); cs.setAttribute("stroke","black");
-  cs.setAttribute("stroke-width",1);
-  p.appendChild(cs); defs.appendChild(p);
+        p.appendChild(s1);
+        p.appendChild(s2);
+      });
+      break;
 
-  p=document.createElementNS(svgNS,"pattern");
-  p.id="gyttja"; p.setAttribute("patternUnits","userSpaceOnUse");
-  p.setAttribute("width",18); p.setAttribute("height",18);
-  let g1=document.createElementNS(svgNS,"line");
-  g1.setAttribute("x1",0); g1.setAttribute("y1",0);
-  g1.setAttribute("x2",18); g1.setAttribute("y2",18);
-  g1.setAttribute("stroke","black");
-  let g2=document.createElementNS(svgNS,"line");
-  g2.setAttribute("x1",18); g2.setAttribute("y1",0);
-  g2.setAttribute("x2",0); g2.setAttribute("y2",18);
-  g2.setAttribute("stroke","black");
-  p.appendChild(g1); p.appendChild(g2); defs.appendChild(p);
+    case "laminated":
+      makePattern(8, 8, (p) => {
+        const bar = document.createElementNS(svgNS, "rect");
+        bar.setAttribute("x", 0);
+        bar.setAttribute("y", 0);
+        bar.setAttribute("width", 8);
+        bar.setAttribute("height", 1.5);
+        bar.setAttribute("fill", "black");
+        p.appendChild(bar);
+      });
+      break;
 
-  p = document.createElementNS(svgNS, "pattern");
-p.id = "marl";
-p.setAttribute("patternUnits", "userSpaceOnUse");
-p.setAttribute("width", 14);   // wider tile
-p.setAttribute("height", 16);  // deeper tile
+    case "clay":
+      makePattern(14, 14, (p) => {
+        const poly = document.createElementNS(svgNS, "polyline");
+        poly.setAttribute("points", "0,2 0,8 4,8");
+        poly.setAttribute("stroke", "black");
+        poly.setAttribute("fill", "none");
+        p.appendChild(poly);
+      });
+      break;
 
-let mU = document.createElementNS(svgNS, "path");
-mU.setAttribute("d", "M0 2 Q5 14 10 2");  // bigger + deeper U
-mU.setAttribute("stroke", "black");
-mU.setAttribute("fill", "none");
-mU.setAttribute("stroke-width", 1.5);
+    case "silt":
+      makePattern(14, 14, (p) => {
+        const poly = document.createElementNS(svgNS, "polyline");
+        poly.setAttribute("points", "0,2 0,8 4,8");
+        poly.setAttribute("stroke", "black");
+        poly.setAttribute("stroke-width", 2);
+        poly.setAttribute("fill", "none");
+        p.appendChild(poly);
+      });
+      break;
 
-p.appendChild(mU);
-defs.appendChild(p);
+    case "fine_sand":
+      makePattern(6, 6, (p) => {
+        const c = document.createElementNS(svgNS, "circle");
+        c.setAttribute("cx", 2);
+        c.setAttribute("cy", 2);
+        c.setAttribute("r", 0.8);
+        c.setAttribute("fill", "black");
+        p.appendChild(c);
+      });
+      break;
+
+    case "medium_sand":
+      makePattern(8, 8, (p) => {
+        const c = document.createElementNS(svgNS, "circle");
+        c.setAttribute("cx", 3);
+        c.setAttribute("cy", 3);
+        c.setAttribute("r", 1.4);
+        c.setAttribute("fill", "black");
+        p.appendChild(c);
+      });
+      break;
+
+    case "coarse_sand":
+      makePattern(10, 10, (p) => {
+        const c = document.createElementNS(svgNS, "circle");
+        c.setAttribute("cx", 4);
+        c.setAttribute("cy", 4);
+        c.setAttribute("r", 2);
+        c.setAttribute("fill", "none");
+        c.setAttribute("stroke", "black");
+        p.appendChild(c);
+      });
+      break;
+
+    case "gyttja":
+      makePattern(18, 18, (p) => {
+        const lines = [
+          [0,0,18,18],
+          [18,0,0,18]
+        ];
+        lines.forEach(([x1,y1,x2,y2]) => {
+          const l = document.createElementNS(svgNS, "line");
+          l.setAttribute("x1", x1);
+          l.setAttribute("y1", y1);
+          l.setAttribute("x2", x2);
+          l.setAttribute("y2", y2);
+          l.setAttribute("stroke", "black");
+          p.appendChild(l);
+        });
+      });
+      break;
+
+    case "marl":
+      makePattern(14, 16, (p) => {
+        const path = document.createElementNS(svgNS, "path");
+        path.setAttribute("d", "M0 2 Q5 14 10 2");
+        path.setAttribute("stroke", "black");
+        path.setAttribute("fill", "none");
+        p.appendChild(path);
+      });
+      break;
+  }
 }
+
+const ORGANIC_PATTERNS = new Set([
+  "sphagnum",
+  "herbaceous",
+  "woody",
+  "detritus",
+  "substantia_humosa",
+  "gyttja"
+]);
+
+const MINEROGENIC_PATTERNS = new Set([
+  "laminated",
+  "clay",
+  "silt",
+  "fine_sand",
+  "medium_sand",
+  "coarse_sand",
+  "marl"
+]);
 
 function drawBoundary(svg,y,x1,x2,type){
   const svgNS="http://www.w3.org/2000/svg";
@@ -514,7 +832,7 @@ function renderSvg() {
   const TITLE_OFFSET = 30;
 
   // -------------------------------
-  // NEW: Determine vertical offset
+  // Vertical offset logic
   // -------------------------------
   const plotFromSurface = document.getElementById("plotFromSurface").checked;
 
@@ -524,28 +842,40 @@ function renderSvg() {
   }
 
   const maxDepth = units.length ? Math.max(...units.map(u => u.bottom)) : 0;
-											
 
   const colX = 60;
   const colY = 10 + TITLE_OFFSET;
 
-  // -------------------------------
-  // UPDATED: SVG height & viewBox use (maxDepth - verticalOffset)
-  // -------------------------------
   const effectiveHeight = (maxDepth - verticalOffset) * pxPerCm;
 
   svgPreview.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  svgPreview.setAttribute("width", width + 80);
-  svgPreview.setAttribute("height", effectiveHeight + TITLE_OFFSET + 40);
-  svgPreview.setAttribute(
-    "viewBox",
-    `0 0 ${width + 80} ${effectiveHeight + TITLE_OFFSET + 40}`
-  );
+const legendWidth = 240;  // space for legend
 
+svgPreview.setAttribute("width", width + 80 + legendWidth);
+svgPreview.setAttribute("height", effectiveHeight + TITLE_OFFSET + 40);
+
+svgPreview.setAttribute(
+  "viewBox",
+  `0 0 ${width + 80 + legendWidth} ${effectiveHeight + TITLE_OFFSET + 40}`
+);
+
+  // -------------------------------
+  // NEW: per‑unit pattern definitions
+  // -------------------------------
   const defs = document.createElementNS(svgNS, "defs");
-  addPatterns(defs);
+
+  units.forEach(u => {
+    if (u.pattern !== "none") {
+      // Each unit gets its own pattern definition
+      addPatterns(defs, u.density, u.scale, u.patternId);
+    }
+  });
+
   svgPreview.appendChild(defs);
 
+  // -------------------------------
+  // Background
+  // -------------------------------
   const bg = document.createElementNS(svgNS, "rect");
   bg.setAttribute("x", 0);
   bg.setAttribute("y", 0);
@@ -555,7 +885,7 @@ function renderSvg() {
   svgPreview.appendChild(bg);
 
   // -------------------------------
-  // TITLE
+  // Title
   // -------------------------------
   if (columnTitle && columnTitle.trim() !== "") {
     const titleText = document.createElementNS(svgNS, "text");
@@ -569,7 +899,7 @@ function renderSvg() {
   }
 
   // -------------------------------
-  // COLUMN OUTLINE
+  // Column outline
   // -------------------------------
   const col = document.createElementNS(svgNS, "rect");
   col.setAttribute("x", colX);
@@ -581,12 +911,13 @@ function renderSvg() {
   svgPreview.appendChild(col);
 
   // -------------------------------
-  // PASS 1: UNITS
+  // PASS 1: Units
   // -------------------------------
   units.forEach(u => {
-    const yTop = colY + (u.top - verticalOffset) * pxPerCm;   // UPDATED
+    const yTop = colY + (u.top - verticalOffset) * pxPerCm;
     const h = (u.bottom - u.top) * pxPerCm;
 
+    // Base fill
     const base = document.createElementNS(svgNS, "rect");
     base.setAttribute("x", colX);
     base.setAttribute("y", yTop);
@@ -603,16 +934,21 @@ function renderSvg() {
     base.setAttribute("stroke", "none");
     svgPreview.appendChild(base);
 
+    // Pattern overlay
     if (u.pattern !== "none") {
       const pat = document.createElementNS(svgNS, "rect");
       pat.setAttribute("x", colX);
       pat.setAttribute("y", yTop);
       pat.setAttribute("width", width);
       pat.setAttribute("height", h);
-      pat.setAttribute("fill", `url(#${u.pattern})`);
+
+      // 🔥 Use the unit‑specific patternId
+      pat.setAttribute("fill", `url(#${u.patternId})`);
+
       svgPreview.appendChild(pat);
     }
 
+    // Label
     if (u.label) {
       const t = document.createElementNS(svgNS, "text");
       t.setAttribute("x", colX + width + 5);
@@ -625,10 +961,10 @@ function renderSvg() {
   });
 
   // -------------------------------
-  // PASS 2: BOUNDARIES
+  // PASS 2: Boundaries
   // -------------------------------
   units.forEach(u => {
-    const yTop = colY + (u.top - verticalOffset) * pxPerCm;   // UPDATED
+    const yTop = colY + (u.top - verticalOffset) * pxPerCm;
     const h = (u.bottom - u.top) * pxPerCm;
 
     drawBoundary(svgPreview, yTop, colX, colX + width, u.boundary_upper);
@@ -636,26 +972,19 @@ function renderSvg() {
   });
 
   // -------------------------------
-  // DEPTH TICKS
+  // Depth ticks
   // -------------------------------
+  const sequenceLength = maxDepth - verticalOffset;
+
   let tickInterval;
-  if (maxDepth < 200) tickInterval = 10;
-  else if (maxDepth < 400) tickInterval = 20;
-  else tickInterval = 50;
+  if (sequenceLength < 51) tickInterval = 5;
+  else if (sequenceLength < 101) tickInterval = 10;
+  else if (sequenceLength < 201) tickInterval = 20;
+  else if (sequenceLength < 1200) tickInterval = 50;
+  else tickInterval = 100;
 
-												   
-							   
-
-													   
-									
-								
-							 
-							 
-									   
-							   
-
-  for (let d = 0; d <= maxDepth; d += tickInterval) {
-    const y = colY + (d - verticalOffset) * pxPerCm;   // UPDATED
+  for (let d = verticalOffset; d <= maxDepth; d += tickInterval) {
+    const y = colY + (d - verticalOffset) * pxPerCm;
 
     const line = document.createElementNS(svgNS, "line");
     line.setAttribute("x1", colX - 5);
@@ -664,24 +993,14 @@ function renderSvg() {
     line.setAttribute("y2", y);
     line.setAttribute("stroke", "black");
     svgPreview.appendChild(line);
-													
-   
 
-													
-								
-							 
-									   
-									
     let labelText;
-							
- 
-
     if (useOD) {
       const depthM = d / 100;
       const odValue = groundOD - depthM;
-      labelText = odValue.toFixed(1);
+      labelText = odValue.toFixed(2);
     } else {
-      labelText = d;   // IMPORTANT: actual depth preserved
+      labelText = d;
     }
 
     const t = document.createElementNS(svgNS, "text");
@@ -694,10 +1013,10 @@ function renderSvg() {
   }
 
   // -------------------------------
-  // DEPTH AXIS LABEL
+  // Depth axis label
   // -------------------------------
   const axisLabel = document.createElementNS(svgNS, "text");
-  const midY = colY + (effectiveHeight / 2);   // UPDATED
+  const midY = colY + (effectiveHeight / 2);
   axisLabel.setAttribute("x", colX - 45);
   axisLabel.setAttribute("y", midY);
   axisLabel.setAttribute("transform", `rotate(-90 ${colX - 45} ${midY})`);
@@ -705,6 +1024,177 @@ function renderSvg() {
   axisLabel.setAttribute("font-size", "16");
   axisLabel.textContent = useOD ? "Elevation (m OD)" : "Depth (cm)";
   svgPreview.appendChild(axisLabel);
+  
+  // -----------------------------------------
+// LEGEND CONSTRUCTION
+// -----------------------------------------
+
+// Collect unique patterns
+const legendEntries = [];
+const seen = new Set();
+
+units.forEach(u => {
+  if (u.pattern !== "none" && !seen.has(u.pattern)) {
+    seen.add(u.pattern);
+    legendEntries.push(u);
+  }
+});
+
+// Split into groups
+const organic = legendEntries.filter(u => ORGANIC_PATTERNS.has(u.pattern));
+const minerogenic = legendEntries.filter(u => MINEROGENIC_PATTERNS.has(u.pattern));
+
+// Legend layout
+const legendX = colX + width + 40;
+let legendY = colY;
+
+const legendGroup = document.createElementNS(svgNS, "g");
+legendGroup.setAttribute("id", "legend");
+svgPreview.appendChild(legendGroup);
+
+// Title
+const title = document.createElementNS(svgNS, "text");
+title.setAttribute("x", legendX);
+title.setAttribute("y", legendY);
+title.setAttribute("font-size", "14");
+title.setAttribute("font-weight", "bold");
+title.textContent = "Legend";
+legendGroup.appendChild(title);
+
+legendY += 20;
+
+// Helper to draw a section header
+function addHeader(text) {
+  const h = document.createElementNS(svgNS, "text");
+  h.setAttribute("x", legendX);
+  h.setAttribute("y", legendY);
+  h.setAttribute("font-size", "12");
+  h.setAttribute("font-weight", "bold");
+  h.textContent = text;
+  legendGroup.appendChild(h);
+  legendY += 18;
+}
+
+// Helper to draw a swatch + label
+function addSwatch(u) {
+  const sw = document.createElementNS(svgNS, "rect");
+  sw.setAttribute("x", legendX);
+  sw.setAttribute("y", legendY);
+  sw.setAttribute("width", 30);
+  sw.setAttribute("height", 18);
+  sw.setAttribute("fill", `url(#${u.patternId})`);
+  sw.setAttribute("stroke", "black");
+  legendGroup.appendChild(sw);
+
+  const label = document.createElementNS(svgNS, "text");
+  label.setAttribute("x", legendX + 40);
+  label.setAttribute("y", legendY + 13);
+  label.setAttribute("font-size", "11");
+  label.textContent = u.pattern.replace(/_/g, " ");
+  legendGroup.appendChild(label);
+
+  legendY += 28;   // consistent spacing
+}
+
+// ORGANIC SECTION
+if (organic.length > 0) {
+
+  legendY += 10;   // ← extra space before section title
+
+  const h = document.createElementNS(svgNS, "text");
+  h.setAttribute("x", legendX);
+  h.setAttribute("y", legendY);
+  h.setAttribute("font-size", "12");
+  h.setAttribute("font-weight", "bold");
+  h.textContent = "Organic";
+  legendGroup.appendChild(h);
+
+  legendY += 18;   // space below header
+  organic.forEach(addSwatch);
+}
+
+// MINEROGENIC SECTION
+if (minerogenic.length > 0) {
+
+  legendY += 10;   // extra space before section title
+
+  const h = document.createElementNS(svgNS, "text");
+  h.setAttribute("x", legendX);
+  h.setAttribute("y", legendY);
+  h.setAttribute("font-size", "12");
+  h.setAttribute("font-weight", "bold");
+  h.textContent = "Minerogenic";
+  legendGroup.appendChild(h);
+
+  legendY += 18;   // space below header before first swatch
+
+  minerogenic.forEach(addSwatch);
+}
+
+// BOUNDARIES SECTION
+legendY += 10;   // extra space before section title
+
+const hb = document.createElementNS(svgNS, "text");
+hb.setAttribute("x", legendX);
+hb.setAttribute("y", legendY);
+hb.setAttribute("font-size", "12");
+hb.setAttribute("font-weight", "bold");
+hb.textContent = "Boundaries";
+legendGroup.appendChild(hb);
+
+legendY += 18;   // space below header
+
+// Rapid (solid)
+{
+  const line = document.createElementNS(svgNS, "line");
+  line.setAttribute("x1", legendX);
+  line.setAttribute("x2", legendX + 30);
+  line.setAttribute("y1", legendY);
+  line.setAttribute("y2", legendY);
+  line.setAttribute("stroke", "black");
+  legendGroup.appendChild(line);
+
+  const label = document.createElementNS(svgNS, "text");
+  label.setAttribute("x", legendX + 40);
+  label.setAttribute("y", legendY + 4);
+  label.setAttribute("font-size", "11");
+  label.textContent = "Rapid (solid)";
+  legendGroup.appendChild(label);
+
+  legendY += 20;
+}
+
+// Diffuse (dashed)
+{
+  const line = document.createElementNS(svgNS, "line");
+  line.setAttribute("x1", legendX);
+  line.setAttribute("x2", legendX + 30);
+  line.setAttribute("y1", legendY);
+  line.setAttribute("y2", legendY);
+  line.setAttribute("stroke", "black");
+  line.setAttribute("stroke-dasharray", "4 3");
+  legendGroup.appendChild(line);
+
+  const label = document.createElementNS(svgNS, "text");
+  label.setAttribute("x", legendX + 40);
+  label.setAttribute("y", legendY + 4);
+  label.setAttribute("font-size", "11");
+  label.textContent = "Diffuse (dashed)";
+  legendGroup.appendChild(label);
+
+  legendY += 30;
+}
+
+// Bounding box
+const box = document.createElementNS(svgNS, "rect");
+box.setAttribute("x", legendX - 15);
+box.setAttribute("y", colY - 15);
+box.setAttribute("width", 220);
+box.setAttribute("height", legendY - colY + 30);
+box.setAttribute("fill", "none");
+box.setAttribute("stroke", "black");
+box.setAttribute("stroke-width", "1");
+svgPreview.appendChild(box);
 }
 
 document.getElementById("downloadPdf").onclick = () => {
@@ -763,4 +1253,3 @@ renderSvg();
 </script>
 </body>
 </html>
-
