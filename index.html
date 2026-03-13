@@ -1189,7 +1189,7 @@ const totalWidth = colX + width + 40 + legendWidth;
   // -------------------------------
   if (columnTitle && columnTitle.trim() !== "") {
     const titleText = document.createElementNS(svgNS, "text");
-    titleText.setAttribute("x", (width + 120) / 2);
+	titleText.setAttribute("x", colX + width / 2);
     titleText.setAttribute("y", 20);
     titleText.setAttribute("text-anchor", "middle");
     titleText.setAttribute("font-size", "18");
